@@ -55,8 +55,10 @@ services:
       - traefik.http.routers.planning-api.middlewares=planning-api-strip
       - traefik.http.middlewares.planning-api-strip.stripprefix.prefixes=/cpp-api/planning
       - traefik.http.services.planning-api.loadbalancer.server.port=8004
+      - traefik.docker.network=cpp-edge
     networks:
       - cpp-edge
+      - default
 
 networks:
   cpp-edge:
