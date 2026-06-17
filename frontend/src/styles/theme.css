@@ -1,55 +1,192 @@
 /*
- * Central design tokens. This file is intended to be SWAPPED to re-theme the
- * whole module (and, by sharing the same custom-property names, the other
- * modules too). Keep it free of component specifics — only tokens here.
+ * Central, swappable theme. The FIRST block is the shared design-token contract
+ * used across modules (palette, spacing, type, the .btn/.input-field utilities).
+ * The SECOND block maps those tokens onto the semantic names this module's
+ * tag-level CSS (base.css / layout.css) consumes, and adds OS-based dark mode
+ * via prefers-color-scheme.  Replace the token values to re-theme everything.
  */
-:root {
-  /* Color palette */
-  --color-bg: #f5f6f8;
-  --color-surface: #ffffff;
-  --color-surface-alt: #eef1f5;
-  --color-border: #d7dce3;
-  --color-text: #1c2430;
-  --color-text-muted: #5d6b7c;
 
-  --color-primary: #2f6df6;
-  --color-primary-hover: #2257d6;
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&display=swap');
+
+/* ---------- Shared design tokens ---------- */
+:root {
+  color-scheme: light;
+
+  /* Colors */
+  --background-color: #F6F3F5;
+  --font-color: #100A19;
+  --accent-color: #5A58A6;
+  --success-color: #6BCF7F;
+  --in-progress-color: #FFD700;
+  --error-color: #FF6B6B;
+  /* Extra Colours */
+  --green-color: #6B8E23;
+  --pink-color: #E97BB0;
+  --gray-color: #66606D;
+  --light-purple: #888BBF;
+
+  /* Surfaces (derived; overridden in dark mode) */
+  --surface-color: #FFFFFF;
+  --surface-alt-color: #ECE8EF;
+  --border-color: #D7D2DD;
+  --muted-color: #66606D;
+
+  /* Sizes (marketing scale; app uses the smaller -app- sizes below) */
+  --font-size-l: 52px;
+  --font-size-m: 42px;
+  --font-size-subtitle-l: 38px;
+  --font-size-text-big: 26px;
+  --font-size-text-main: 20px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-s: 8px;
+  --spacing-m: 16px;
+  --spacing-l: 24px;
+  --spacing-xl: 40px;
+  --spacing-xxl: 48px;
+
+  /* Borders */
+  --thin-border: 2px;
+  --thick-border: 4px;
+  --border-radius-l: 8px;
+  --border-radius-s: 4px;
+
+  /* Margins */
+  --margin-side: 100px;
+}
+
+/* ---------- Semantic mapping for this module's tag-level CSS ---------- */
+:root {
+  /* Colors */
+  --color-bg: var(--background-color);
+  --color-surface: var(--surface-color);
+  --color-surface-alt: var(--surface-alt-color);
+  --color-border: var(--border-color);
+  --color-text: var(--font-color);
+  --color-text-muted: var(--muted-color);
+
+  --color-primary: var(--accent-color);
+  --color-primary-hover: var(--light-purple);
   --color-primary-contrast: #ffffff;
 
-  --color-danger: #d64545;
-  --color-success: #2e9e6b;
-  --color-warning: #d99000;
+  --color-danger: var(--error-color);
+  --color-success: var(--success-color);
+  --color-warning: var(--in-progress-color);
 
   /* Status accents (Kanban columns) */
-  --color-status-todo: #6b7785;
-  --color-status-progress: #2f6df6;
-  --color-status-done: #2e9e6b;
+  --color-status-todo: var(--gray-color);
+  --color-status-progress: var(--accent-color);
+  --color-status-done: var(--success-color);
 
-  /* Typography */
-  --font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-size-base: 15px;
-  --font-size-sm: 13px;
-  --font-size-lg: 18px;
+  /* Typography (app-appropriate sizes; same Noto Sans family) */
+  --font-family: 'Noto Sans', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-size-base: 16px;
+  --font-size-sm: 14px;
+  --font-size-lg: 20px;
   --font-weight-bold: 600;
   --line-height: 1.5;
 
   /* Spacing scale */
-  --space-1: 4px;
-  --space-2: 8px;
+  --space-1: var(--spacing-xs);
+  --space-2: var(--spacing-s);
   --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
+  --space-4: var(--spacing-m);
+  --space-5: var(--spacing-l);
+  --space-6: var(--spacing-xl);
 
   /* Radius & shadow */
-  --radius-sm: 4px;
-  --radius-md: 8px;
+  --radius-sm: var(--border-radius-s);
+  --radius-md: var(--border-radius-l);
   --radius-lg: 12px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.16);
 
   /* Layout */
   --header-height: 56px;
   --sidebar-width: 220px;
   --content-max-width: 1280px;
+
+  /* Feedback surfaces (token-based so they adapt to dark mode) */
+  --danger-surface: color-mix(in srgb, var(--error-color) 18%, var(--surface-color));
+}
+
+/* ---------- Dark mode ---------- */
+/* Toggled via [data-theme="dark"] on <html>. The theme controller sets it from
+   the OS preference by default, with an optional manual override. */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Exact overrides from the shared theme spec */
+  --background-color: #100A19;
+  --font-color: #F6F3F5;
+  --accent-color: #888BBF;
+  --light-purple: #5A58A6;
+  --green-color: #5A58A6;
+
+  /* App surfaces (extend the spec so cards/tables/columns read well on dark) */
+  --surface-color: #1B1525;
+  --surface-alt-color: #261F33;
+  --border-color: #3A3147;
+  --muted-color: #A79FB2;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- Shared utility classes (cross-module contract) ---------- */
+.container {
+  margin-left: var(--margin-side);
+  margin-right: var(--margin-side);
+}
+
+.btn {
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  padding: 12px 24px;
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: var(--border-radius-l);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.btn:hover:not(:disabled) {
+  background-color: var(--light-purple);
+}
+.btn:disabled {
+  background-color: var(--gray-color);
+  cursor: not-allowed;
+}
+
+.input-field {
+  font-family: var(--font-family);
+  font-weight: 400;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  padding: 12px 24px;
+  border: var(--thin-border) solid var(--gray-color);
+  border-radius: var(--border-radius-s);
+  outline: none;
+  background: var(--surface-color);
+}
+.input-field:focus {
+  border-color: var(--accent-color);
+}
+.input-field.error {
+  border-color: var(--error-color);
+}
+.input-field.success {
+  border-color: var(--success-color);
+}
+
+.feedback-success {
+  color: var(--success-color);
+}
+.feedback-in-progress {
+  color: var(--in-progress-color);
+}
+.feedback-error {
+  color: var(--error-color);
 }

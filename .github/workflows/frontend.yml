@@ -34,11 +34,11 @@ jobs:
       - name: Type-check & build (VITE_MOCK_AUTH=true)
         working-directory: frontend
         env:
-          # Apex domain (sommer2019.de) serves from root.
-          BASE_PATH: "/"
+          # Served from the project Pages path (no custom domain).
+          BASE_PATH: "/PlanningToolVibeCoded/"
         run: npm run build:mock
 
-      - name: SPA fallback (deep links) + keep CNAME
+      - name: SPA fallback for deep links
         working-directory: frontend
         run: cp dist/index.html dist/404.html
 

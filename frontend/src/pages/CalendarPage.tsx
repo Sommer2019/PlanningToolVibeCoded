@@ -2,25 +2,34 @@ import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
 import type { CalendarEntry, Task } from "../api";
+import { useI18n } from "../i18n/I18nContext";
 import { useProjectCtx } from "./ProjectLayout";
 import { useAsync } from "../hooks/useAsync";
 import { Spinner, ErrorBanner } from "../components/Feedback";
 import { Modal } from "../components/Modal";
-import { addDays, fromLocalInput, sameDay, startOfDay, toLocalInput } from "../util/format";
+import { addDays, fromLocalInput, getLocale, sameDay, startOfDay, toLocalInput } from "../util/format";
 
 interface DayEvent {
   label: string;
   kind: "task" | "entry";
 }
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 function startOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
+// Localized short weekday names, Sunday-first (1 Jan 2023 was a Sunday).
+function weekdayNames(locale: string): string[] {
+  return Array.from({ length: 7 }, (_, i) =>
+    new Date(2023, 0, 1 + i).toLocaleDateString(locale, { weekday: "short" }),
+  );
+}
+
 export function CalendarPage() {
   const { project } = useProjectCtx();
+  const { t } = useI18n();
+  const locale = getLocale();
+  const WEEKDAYS = weekdayNames(locale);
   const { data, loading, error, reload } = useAsync(async () => {
     const [tasks, entries] = await Promise.all([
       api.listProjectTasks(project.id),
@@ -76,17 +85,17 @@ export function CalendarPage() {
     <div className="col">
       <div className="toolbar">
         <button data-variant="secondary" onClick={() => setView((v) => new Date(v.getFullYear(), v.getMonth() - 1, 1))}>
-          ← Prev
+          {t("common.prev")}
         </button>
-        <strong>{view.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</strong>
+        <strong>{view.toLocaleDateString(locale, { month: "long", year: "numeric" })}</strong>
         <button data-variant="secondary" onClick={() => setView((v) => new Date(v.getFullYear(), v.getMonth() + 1, 1))}>
-          Next →
+          {t("common.next")}
         </button>
         <button data-variant="ghost" onClick={() => setView(startOfMonth(new Date()))}>
-          Today
+          {t("common.today")}
         </button>
         <span className="spacer" />
-        <button onClick={() => setAdding(true)}>+ Calendar entry</button>
+        <button onClick={() => setAdding(true)}>{t("calendar.entry.new")}</button>
       </div>
 
       <div className="calendar-grid">
@@ -111,23 +120,21 @@ export function CalendarPage() {
                   {ev.label}
                 </span>
               ))}
-              {events.length > 3 && <small>+{events.length - 3} more</small>}
+              {events.length > 3 && <small>{t("calendar.more", { n: events.length - 3 })}</small>}
             </div>
           );
         })}
       </div>
 
       <article className="col">
-        <h3 style={{ margin: 0 }}>Subscribe (iCal / CalDAV)</h3>
-        <small className="muted">
-          Read-only feed compatible with any calendar client. The token in the URL is the credential.
-        </small>
+        <h3 style={{ margin: 0 }}>{t("calendar.subscribe.title")}</h3>
+        <small className="muted">{t("calendar.subscribe.hint")}</small>
         <div className="row wrap">
           <button data-variant="secondary" onClick={() => getFeed(true)}>
-            Project feed link
+            {t("calendar.subscribe.project")}
           </button>
           <button data-variant="secondary" onClick={() => getFeed(false)}>
-            My personal feed link
+            {t("calendar.subscribe.personal")}
           </button>
         </div>
         {feedErr && <ErrorBanner message={feedErr} />}
@@ -138,7 +145,7 @@ export function CalendarPage() {
               data-variant="ghost"
               onClick={() => navigator.clipboard?.writeText(feedUrl)}
             >
-              Copy
+              {t("common.copy")}
             </button>
           </div>
         )}
@@ -165,6 +172,7 @@ function EntryDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useI18n();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [start, setStart] = useState(() => toLocalInput(new Date().toISOString()));
@@ -176,11 +184,11 @@ function EntryDialog({
     e.preventDefault();
     setError(null);
     if (!title.trim()) {
-      setError("Title is required.");
+      setError(t("calendar.entry.errTitle"));
       return;
     }
     if (new Date(end) < new Date(start)) {
-      setError("End must not be before start.");
+      setError(t("calendar.entry.errDates"));
       return;
     }
     try {
@@ -201,24 +209,24 @@ function EntryDialog({
   }
 
   return (
-    <Modal open={open} title="New calendar entry" onClose={onClose}>
+    <Modal open={open} title={t("calendar.entry.titleNew")} onClose={onClose}>
       <form onSubmit={submit} className="col">
         {error && <ErrorBanner message={error} />}
         <fieldset>
-          <label htmlFor="e-title">Title *</label>
+          <label htmlFor="e-title">{t("calendar.entry.title")}</label>
           <input id="e-title" required value={title} onChange={(e) => setTitle(e.target.value)} />
         </fieldset>
         <fieldset>
-          <label htmlFor="e-desc">Description</label>
+          <label htmlFor="e-desc">{t("calendar.entry.description")}</label>
           <textarea id="e-desc" value={description} onChange={(e) => setDescription(e.target.value)} />
         </fieldset>
         <div className="row wrap">
           <fieldset style={{ flex: 1, minWidth: 180 }}>
-            <label htmlFor="e-start">Start *</label>
+            <label htmlFor="e-start">{t("calendar.entry.start")}</label>
             <input id="e-start" type="datetime-local" required value={start} onChange={(e) => setStart(e.target.value)} />
           </fieldset>
           <fieldset style={{ flex: 1, minWidth: 180 }}>
-            <label htmlFor="e-end">End *</label>
+            <label htmlFor="e-end">{t("calendar.entry.end")}</label>
             <input id="e-end" type="datetime-local" required value={end} onChange={(e) => setEnd(e.target.value)} />
           </fieldset>
         </div>
@@ -229,13 +237,13 @@ function EntryDialog({
             checked={scopeProject}
             onChange={(e) => setScopeProject(e.target.checked)}
           />
-          <span>Visible to the whole project (otherwise personal)</span>
+          <span>{t("calendar.entry.scope")}</span>
         </label>
         <div className="actions">
           <button type="button" data-variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
-          <button type="submit">Create</button>
+          <button type="submit">{t("common.create")}</button>
         </div>
       </form>
     </Modal>

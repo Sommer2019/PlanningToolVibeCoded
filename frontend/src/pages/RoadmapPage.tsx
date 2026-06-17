@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { api } from "../api";
+import { useI18n } from "../i18n/I18nContext";
 import { useProjectCtx } from "./ProjectLayout";
 import { useAsync } from "../hooks/useAsync";
 import { Spinner, ErrorBanner, Empty } from "../components/Feedback";
 import { statusColor } from "../util/statusColor";
-import { formatDate } from "../util/format";
+import { formatDate, getLocale } from "../util/format";
 
 const MONTHS_VISIBLE = 3;
 
@@ -17,8 +18,10 @@ function addMonths(d: Date, n: number): Date {
 
 export function RoadmapPage() {
   const { project, statuses } = useProjectCtx();
+  const { t } = useI18n();
   const { data, loading, error } = useAsync(() => api.listProjectTasks(project.id), [project.id]);
   const [view, setView] = useState(() => startOfMonth(new Date()));
+  const locale = getLocale();
 
   const statusName = useMemo(
     () => new Map(statuses.map((s) => [s.id, s.name])),
@@ -40,52 +43,52 @@ export function RoadmapPage() {
     <div className="col">
       <div className="toolbar">
         <button data-variant="secondary" onClick={() => setView((v) => addMonths(v, -1))}>
-          ← Prev
+          {t("common.prev")}
         </button>
         <strong>
-          {windowStart.toLocaleDateString(undefined, { month: "long", year: "numeric" })} –{" "}
-          {addMonths(windowStart, MONTHS_VISIBLE - 1).toLocaleDateString(undefined, {
+          {windowStart.toLocaleDateString(locale, { month: "long", year: "numeric" })} –{" "}
+          {addMonths(windowStart, MONTHS_VISIBLE - 1).toLocaleDateString(locale, {
             month: "long",
             year: "numeric",
           })}
         </strong>
         <button data-variant="secondary" onClick={() => setView((v) => addMonths(v, 1))}>
-          Next →
+          {t("common.next")}
         </button>
         <span className="spacer" />
         <button data-variant="ghost" onClick={() => setView(startOfMonth(new Date()))}>
-          Today
+          {t("common.today")}
         </button>
       </div>
 
       {tasks.length === 0 ? (
-        <Empty message="No tasks to show on the roadmap." />
+        <Empty message={t("roadmap.empty")} />
       ) : (
         <div className="timeline">
           <div className="timeline-axis">
-            <span className="muted">Task</span>
+            <span className="muted">{t("roadmap.task")}</span>
             <div className="timeline-months">
               {months.map((m) => (
                 <span className="timeline-month" key={m.toISOString()}>
-                  {m.toLocaleDateString(undefined, { month: "short", year: "2-digit" })}
+                  {m.toLocaleDateString(locale, { month: "short", year: "2-digit" })}
                 </span>
               ))}
             </div>
           </div>
 
-          {tasks.map((t) => {
-            const start = new Date(t.plannedStart).getTime();
-            const end = new Date(t.plannedEnd).getTime();
+          {tasks.map((task) => {
+            const start = new Date(task.plannedStart).getTime();
+            const end = new Date(task.plannedEnd).getTime();
             const s = Math.max(start, windowStart.getTime());
             const e = Math.min(end, windowEnd.getTime());
             const visible = e > windowStart.getTime() && s < windowEnd.getTime();
             const left = ((s - windowStart.getTime()) / totalMs) * 100;
             const width = Math.max(((e - s) / totalMs) * 100, 1.5);
             return (
-              <div className="timeline-row" key={t.id}>
+              <div className="timeline-row" key={task.id}>
                 <div className="col" style={{ gap: 0 }}>
-                  <span>{t.title}</span>
-                  <small className="muted">{t.assignee}</small>
+                  <span>{task.title}</span>
+                  <small className="muted">{task.assignee}</small>
                 </div>
                 <div className="timeline-track">
                   {visible ? (
@@ -94,15 +97,15 @@ export function RoadmapPage() {
                       style={{
                         left: `${left}%`,
                         width: `${width}%`,
-                        background: statusColor(statusName.get(t.statusId) ?? ""),
+                        background: statusColor(statusName.get(task.statusId) ?? ""),
                       }}
-                      title={`${t.title}: ${formatDate(t.plannedStart)} – ${formatDate(t.plannedEnd)}`}
+                      title={`${task.title}: ${formatDate(task.plannedStart)} – ${formatDate(task.plannedEnd)}`}
                     >
-                      {t.title}
+                      {task.title}
                     </div>
                   ) : (
                     <span className="muted" style={{ paddingLeft: 8, fontSize: 12 }}>
-                      outside range
+                      {t("roadmap.outside")}
                     </span>
                   )}
                 </div>

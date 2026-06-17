@@ -107,7 +107,7 @@
   margin-top: var(--space-1);
 }
 .error-banner {
-  background: #fdecea;
+  background: var(--danger-surface);
   color: var(--color-danger);
   border: 1px solid var(--color-danger);
   border-radius: var(--radius-sm);

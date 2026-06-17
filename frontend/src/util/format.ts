@@ -1,7 +1,16 @@
 // Date/format helpers shared across views.
 
+// Active locale for date formatting, kept in sync with the i18n language.
+let locale = "en";
+export function setLocale(l: string): void {
+  locale = l;
+}
+export function getLocale(): string {
+  return locale;
+}
+
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
+  return new Date(iso).toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -9,7 +18,7 @@ export function formatDate(iso: string): string {
 }
 
 export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
+  return new Date(iso).toLocaleString(locale, {
     month: "short",
     day: "numeric",
     hour: "2-digit",

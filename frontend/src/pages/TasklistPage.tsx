@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { api } from "../api";
 import type { Task } from "../api";
 import { useProjectCtx } from "./ProjectLayout";
+import { useI18n } from "../i18n/I18nContext";
 import { useAsync } from "../hooks/useAsync";
 import { Spinner, ErrorBanner, Empty } from "../components/Feedback";
 import { TaskFormDialog } from "../components/TaskFormDialog";
@@ -11,6 +12,7 @@ type SortKey = "title" | "assignee" | "status" | "plannedStart" | "plannedEnd";
 
 export function TasklistPage() {
   const { project, statuses, members } = useProjectCtx();
+  const { t } = useI18n();
   const { data, loading, error, reload } = useAsync(
     () => api.listProjectTasks(project.id),
     [project.id],
@@ -59,9 +61,9 @@ export function TasklistPage() {
     <div className="col">
       <div className="toolbar">
         <label className="row" style={{ margin: 0 }}>
-          <span className="muted">Assignee</span>
+          <span className="muted">{t("tasklist.assignee")}</span>
           <select style={{ width: "auto" }} value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-            <option value="">All</option>
+            <option value="">{t("common.all")}</option>
             {memberRefs.map((m) => (
               <option key={m} value={m}>
                 {m}
@@ -70,9 +72,9 @@ export function TasklistPage() {
           </select>
         </label>
         <label className="row" style={{ margin: 0 }}>
-          <span className="muted">Status</span>
+          <span className="muted">{t("tasklist.status")}</span>
           <select style={{ width: "auto" }} value={statusId} onChange={(e) => setStatusId(e.target.value)}>
-            <option value="">All</option>
+            <option value="">{t("common.all")}</option>
             {statuses.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -81,43 +83,43 @@ export function TasklistPage() {
           </select>
         </label>
         <label className="row" style={{ margin: 0 }}>
-          <span className="muted">From</span>
+          <span className="muted">{t("tasklist.from")}</span>
           <input style={{ width: "auto" }} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         </label>
         <label className="row" style={{ margin: 0 }}>
-          <span className="muted">To</span>
+          <span className="muted">{t("tasklist.to")}</span>
           <input style={{ width: "auto" }} type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </label>
       </div>
 
       {rows.length === 0 ? (
-        <Empty message="No tasks match the filters." />
+        <Empty message={t("tasklist.empty")} />
       ) : (
         <table>
           <thead>
             <tr>
-              <th onClick={() => toggleSort("title")}>Title{arrow("title")}</th>
-              <th onClick={() => toggleSort("assignee")}>Assignee{arrow("assignee")}</th>
-              <th onClick={() => toggleSort("status")}>Status{arrow("status")}</th>
-              <th onClick={() => toggleSort("plannedStart")}>Start{arrow("plannedStart")}</th>
-              <th onClick={() => toggleSort("plannedEnd")}>End{arrow("plannedEnd")}</th>
-              <th>Edit</th>
+              <th onClick={() => toggleSort("title")}>{t("tasklist.colTitle")}{arrow("title")}</th>
+              <th onClick={() => toggleSort("assignee")}>{t("tasklist.assignee")}{arrow("assignee")}</th>
+              <th onClick={() => toggleSort("status")}>{t("tasklist.status")}{arrow("status")}</th>
+              <th onClick={() => toggleSort("plannedStart")}>{t("tasklist.colStart")}{arrow("plannedStart")}</th>
+              <th onClick={() => toggleSort("plannedEnd")}>{t("tasklist.colEnd")}{arrow("plannedEnd")}</th>
+              <th>{t("common.edit")}</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((t) => (
-              <tr key={t.id}>
+            {rows.map((task) => (
+              <tr key={task.id}>
                 <td>
-                  {t.locked && <span title="Locked">🔒 </span>}
-                  {t.title}
+                  {task.locked && <span title={t("board.locked")}>🔒 </span>}
+                  {task.title}
                 </td>
-                <td>{t.assignee}</td>
-                <td>{statusName.get(t.statusId) ?? "—"}</td>
-                <td>{formatDate(t.plannedStart)}</td>
-                <td>{formatDate(t.plannedEnd)}</td>
+                <td>{task.assignee}</td>
+                <td>{statusName.get(task.statusId) ?? "—"}</td>
+                <td>{formatDate(task.plannedStart)}</td>
+                <td>{formatDate(task.plannedEnd)}</td>
                 <td>
-                  <button data-variant="ghost" onClick={() => setEditing(t)}>
-                    Edit
+                  <button data-variant="ghost" onClick={() => setEditing(task)}>
+                    {t("common.edit")}
                   </button>
                 </td>
               </tr>

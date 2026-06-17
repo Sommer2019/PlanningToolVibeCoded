@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth/AuthContext";
+import { useI18n } from "../i18n/I18nContext";
 import { useProjectCtx } from "./ProjectLayout";
 import { ErrorBanner, Empty } from "../components/Feedback";
 
 export function MembersPage() {
   const { project, members, isOwnerOrAdmin, reload } = useProjectCtx();
   const { mockUsers } = useAuth();
+  const { t } = useI18n();
   const [userRef, setUserRef] = useState("");
   const [role, setRole] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -29,20 +31,20 @@ export function MembersPage() {
       {error && <ErrorBanner message={error} />}
 
       <article className="col">
-        <h3 style={{ margin: 0 }}>Members ({active.length})</h3>
+        <h3 style={{ margin: 0 }}>{t("members.title", { n: active.length })}</h3>
         <table>
           <thead>
             <tr>
-              <th>User</th>
-              <th>Role</th>
-              {isOwnerOrAdmin && <th>Actions</th>}
+              <th>{t("members.colUser")}</th>
+              <th>{t("members.colRole")}</th>
+              {isOwnerOrAdmin && <th>{t("members.colActions")}</th>}
             </tr>
           </thead>
           <tbody>
             {active.map((m) => (
               <tr key={m.id}>
                 <td>{m.userRef}</td>
-                <td>{m.role ?? "member"}</td>
+                <td>{m.role ?? t("members.roleMember")}</td>
                 {isOwnerOrAdmin && (
                   <td>
                     <button
@@ -50,7 +52,7 @@ export function MembersPage() {
                       disabled={m.userRef === project.createdBy}
                       onClick={() => run(() => api.removeMember(project.id, m.id))}
                     >
-                      Remove
+                      {t("members.remove")}
                     </button>
                   </td>
                 )}
@@ -62,15 +64,15 @@ export function MembersPage() {
 
       {isOwnerOrAdmin && (
         <article className="col">
-          <h3 style={{ margin: 0 }}>Join requests ({requests.length})</h3>
+          <h3 style={{ margin: 0 }}>{t("members.requests.title", { n: requests.length })}</h3>
           {requests.length === 0 ? (
-            <Empty message="No pending requests." />
+            <Empty message={t("members.requests.empty")} />
           ) : (
             <table>
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Actions</th>
+                  <th>{t("members.colUser")}</th>
+                  <th>{t("members.colActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -79,13 +81,13 @@ export function MembersPage() {
                     <td>{m.userRef}</td>
                     <td className="row">
                       <button onClick={() => run(() => api.approveMember(project.id, m.id))}>
-                        Approve
+                        {t("members.approve")}
                       </button>
                       <button
                         data-variant="danger"
                         onClick={() => run(() => api.removeMember(project.id, m.id))}
                       >
-                        Reject
+                        {t("members.reject")}
                       </button>
                     </td>
                   </tr>
@@ -98,7 +100,7 @@ export function MembersPage() {
 
       {isOwnerOrAdmin && (
         <article className="col" style={{ maxWidth: 460 }}>
-          <h3 style={{ margin: 0 }}>Add member directly</h3>
+          <h3 style={{ margin: 0 }}>{t("members.add.title")}</h3>
           <form
             className="col"
             onSubmit={(e) => {
@@ -114,7 +116,7 @@ export function MembersPage() {
               <input
                 style={{ flex: 1, minWidth: 180 }}
                 list="known-users"
-                placeholder="user reference (sub)"
+                placeholder={t("members.add.userRef")}
                 value={userRef}
                 onChange={(e) => setUserRef(e.target.value)}
               />
@@ -125,12 +127,12 @@ export function MembersPage() {
               </datalist>
               <input
                 style={{ width: 140 }}
-                placeholder="role (optional)"
+                placeholder={t("members.add.role")}
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
               />
               <button type="submit" disabled={!userRef.trim()}>
-                Add
+                {t("common.add")}
               </button>
             </div>
           </form>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
 import type { Membership, Status, Task, TaskInput } from "../api";
+import { useI18n } from "../i18n/I18nContext";
 import { Modal } from "./Modal";
 import { ErrorBanner } from "./Feedback";
 import { fromLocalInput, toLocalInput } from "../util/format";
@@ -30,6 +31,7 @@ function defaultEnd(): string {
 }
 
 export function TaskFormDialog({ open, projectId, statuses, members, task, onClose, onSaved }: Props) {
+  const { t } = useI18n();
   const memberRefs = members.filter((m) => m.status === "MEMBER").map((m) => m.userRef);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -66,11 +68,11 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
     e.preventDefault();
     setError(null);
     if (!title.trim() || !description.trim() || !assignee || !statusId) {
-      setError("Title, description, assignee and status are required.");
+      setError(t("task.form.errRequired"));
       return;
     }
     if (new Date(plannedEnd) < new Date(plannedStart)) {
-      setError("Planned end must not be before planned start.");
+      setError(t("task.form.errDates"));
       return;
     }
     const input: TaskInput = {
@@ -95,15 +97,15 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
   }
 
   return (
-    <Modal open={open} title={task ? "Edit task" : "New task"} onClose={onClose}>
+    <Modal open={open} title={task ? t("task.form.titleEdit") : t("task.form.titleNew")} onClose={onClose}>
       <form onSubmit={submit} className="col">
         {error && <ErrorBanner message={error} />}
         <fieldset>
-          <label htmlFor="t-title">Title *</label>
+          <label htmlFor="t-title">{t("task.form.title")}</label>
           <input id="t-title" required value={title} onChange={(e) => setTitle(e.target.value)} />
         </fieldset>
         <fieldset>
-          <label htmlFor="t-desc">Description *</label>
+          <label htmlFor="t-desc">{t("task.form.description")}</label>
           <textarea
             id="t-desc"
             required
@@ -113,9 +115,9 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
         </fieldset>
         <div className="row wrap">
           <fieldset style={{ flex: 1, minWidth: 180 }}>
-            <label htmlFor="t-assignee">Assignee *</label>
+            <label htmlFor="t-assignee">{t("task.form.assignee")}</label>
             <select id="t-assignee" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-              {memberRefs.length === 0 && <option value="">No members</option>}
+              {memberRefs.length === 0 && <option value="">{t("task.form.noMembers")}</option>}
               {memberRefs.map((m) => (
                 <option key={m} value={m}>
                   {m}
@@ -124,7 +126,7 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
             </select>
           </fieldset>
           <fieldset style={{ flex: 1, minWidth: 180 }}>
-            <label htmlFor="t-status">Status *</label>
+            <label htmlFor="t-status">{t("task.form.status")}</label>
             <select id="t-status" value={statusId} onChange={(e) => setStatusId(e.target.value)}>
               {statuses.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -136,7 +138,7 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
         </div>
         <div className="row wrap">
           <fieldset style={{ flex: 1, minWidth: 180 }}>
-            <label htmlFor="t-start">Planned start *</label>
+            <label htmlFor="t-start">{t("task.form.plannedStart")}</label>
             <input
               id="t-start"
               type="datetime-local"
@@ -146,7 +148,7 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
             />
           </fieldset>
           <fieldset style={{ flex: 1, minWidth: 180 }}>
-            <label htmlFor="t-end">Planned end *</label>
+            <label htmlFor="t-end">{t("task.form.plannedEnd")}</label>
             <input
               id="t-end"
               type="datetime-local"
@@ -158,10 +160,10 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
         </div>
         <div className="actions">
           <button type="button" data-variant="secondary" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="submit" disabled={saving}>
-            {task ? "Save" : "Create"}
+            {task ? t("common.save") : t("common.create")}
           </button>
         </div>
       </form>
