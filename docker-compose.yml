@@ -34,14 +34,15 @@ services:
   planning-backend:
     build:
       context: ./backend
-      dockerfile: ./docker/Dockerfile
+      dockerfile: ../docker/Dockerfile
     image: ghcr.io/sommer2019/planningtoolvibecoded-backend:latest
     depends_on:
       planning-postgres:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: mock
-      APP_AUTH_MOCK: "true"
+      SPRING_PROFILES_ACTIVE: prod
+      APP_AUTH_MOCK: "false"
+      APP_AUTH_ISSUER_URI: "https://hackathon.amogusdrip.de/auth/application/o/vibecode/"
       SPRING_DATASOURCE_URL: jdbc:postgresql://planning-postgres:5432/planning
       SPRING_DATASOURCE_USERNAME: planning
       SPRING_DATASOURCE_PASSWORD: planning
