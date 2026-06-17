@@ -13,13 +13,12 @@ import { userColor } from "../util/userColor";
 // Special filter values; any other value is a concrete assignee userRef.
 const MINE = "__mine__";
 const ALL = "__all__";
-const UNASSIGNED = "__unassigned__";
 
 export function BoardPage() {
   const { project, statuses, members, isOwnerOrAdmin } = useProjectCtx();
   const { me } = useAuth();
   const { t } = useI18n();
-  const [filter, setFilter] = useState<string>(MINE);
+  const [filter, setFilter] = useState<string>(ALL);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +50,6 @@ export function BoardPage() {
   const shown = useMemo(() => {
     if (filter === ALL) return tasks;
     if (filter === MINE) return tasks.filter((t) => t.assignee === me?.subject);
-    if (filter === UNASSIGNED) return tasks.filter((t) => !t.assignee);
     return tasks.filter((t) => t.assignee === filter);
   }, [tasks, filter, me]);
 
@@ -128,13 +126,6 @@ export function BoardPage() {
             style={{ borderRadius: "var(--radius-lg)", padding: "4px 12px", border: "1px solid var(--border-color)" }}
           >
             {t("board.filter.mine")}
-          </button>
-          <button
-            data-variant={filter === UNASSIGNED ? "primary" : "ghost"}
-            onClick={() => setFilter(UNASSIGNED)}
-            style={{ borderRadius: "var(--radius-lg)", padding: "4px 12px", border: "1px solid var(--border-color)" }}
-          >
-            {t("task.form.noAssignee")}
           </button>
           {memberRefs.map((m) => {
             const isSelected = filter === m;
