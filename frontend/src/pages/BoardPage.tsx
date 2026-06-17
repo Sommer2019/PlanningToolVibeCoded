@@ -111,18 +111,42 @@ export function BoardPage() {
   return (
     <div className="col">
       <div className="toolbar">
-        <label className="row" style={{ margin: 0 }}>
-          <span className="muted">{t("board.filter.label")}</span>
-          <select style={{ width: "auto" }} value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value={MINE}>{t("board.filter.mine")}</option>
-            {memberRefs.map((m) => (
-              <option key={m} value={m}>
+        <div className="row wrap" style={{ gap: "var(--space-2)", alignItems: "center" }}>
+          <span className="muted" style={{ marginRight: "var(--space-2)" }}>{t("board.filter.label")}</span>
+          <button
+            data-variant={filter === ALL ? "primary" : "ghost"}
+            onClick={() => setFilter(ALL)}
+            style={{ borderRadius: "var(--radius-lg)", padding: "4px 12px", border: "1px solid var(--border-color)" }}
+          >
+            {t("board.filter.all")}
+          </button>
+          <button
+            data-variant={filter === MINE ? "primary" : "ghost"}
+            onClick={() => setFilter(MINE)}
+            style={{ borderRadius: "var(--radius-lg)", padding: "4px 12px", border: "1px solid var(--border-color)" }}
+          >
+            {t("board.filter.mine")}
+          </button>
+          {memberRefs.map((m) => {
+            const isSelected = filter === m;
+            return (
+              <button
+                key={m}
+                onClick={() => setFilter(m)}
+                style={{
+                  borderRadius: "var(--radius-lg)",
+                  padding: "4px 12px",
+                  border: isSelected ? `2px solid var(--color-primary)` : "1px solid var(--border-color)",
+                  backgroundColor: userColor(m),
+                  color: "var(--color-text)",
+                  cursor: "pointer"
+                }}
+              >
                 {m}
-              </option>
-            ))}
-            <option value={ALL}>{t("board.filter.all")}</option>
-          </select>
-        </label>
+              </button>
+            );
+          })}
+        </div>
         <span className="spacer" />
         <button onClick={() => setCreating(true)}>{t("board.newTask")}</button>
       </div>
@@ -163,7 +187,7 @@ export function BoardPage() {
                     key={task.id}
                     className={`card${dragId === task.id ? " dragging" : ""}`}
                     draggable={canEdit(task)}
-                    style={{ borderLeft: `3px solid ${userColor(task.assignee)}` }}
+                    style={{ backgroundColor: userColor(task.assignee) }}
                     onDragStart={(e) => {
                       e.dataTransfer.setData("text/plain", task.id);
                       setDragId(task.id);

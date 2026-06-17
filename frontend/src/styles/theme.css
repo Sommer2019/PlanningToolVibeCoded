@@ -26,6 +26,16 @@
   --gray-color: #66606D;
   --light-purple: #888BBF;
 
+  /* User colors (pastels for light mode) */
+  --user-color-0: #e6f7ff;
+  --user-color-1: #f6ffed;
+  --user-color-2: #fffb8f;
+  --user-color-3: #ffe7ba;
+  --user-color-4: #ffd6e7;
+  --user-color-5: #f0f5ff;
+  --user-color-6: #efdbff;
+  --user-color-7: #d9f7be;
+
   /* Surfaces (derived; overridden in dark mode) */
   --surface-color: #FFFFFF;
   --surface-alt-color: #ECE8EF;
@@ -124,6 +134,16 @@
   --accent-color: #888BBF;
   --light-purple: #5A58A6;
   --green-color: #5DBB63;
+
+  /* User colors (darker muted tones for dark mode) */
+  --user-color-0: #1a365d;
+  --user-color-1: #1c4532;
+  --user-color-2: #5f5a11;
+  --user-color-3: #6b3a16;
+  --user-color-4: #6b1b42;
+  --user-color-5: #1e285a;
+  --user-color-6: #3b1959;
+  --user-color-7: #325c1d;
 
   /* App surfaces (extend the spec so cards/tables/columns read well on dark) */
   --surface-color: #1B1525;
