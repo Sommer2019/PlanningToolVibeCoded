@@ -1,57 +1,53 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
-type Mode = "light" | "dark";
+export type ThemeMode = "system" | "light" | "dark";
+export const THEME_MODES: ThemeMode[] = ["system", "light", "dark"];
 const STORAGE_KEY = "planning_theme";
 
 function osPrefersDark(): boolean {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
 }
 
-function initialMode(): Mode {
+function initialMode(): ThemeMode {
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") return stored;
-  return osPrefersDark() ? "dark" : "light"; // default: follow the OS setting
+  return stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
 }
 
 interface ThemeState {
-  mode: Mode;
-  toggle: () => void;
+  /** The user's chosen preference. */
+  mode: ThemeMode;
+  /** The actually-applied theme (system resolved against the OS). */
+  resolved: "light" | "dark";
+  setMode: (m: ThemeMode) => void;
 }
 
 const ThemeCtx = createContext<ThemeState | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<Mode>(initialMode);
-  // Whether the user has explicitly overridden the OS setting.
-  const [overridden, setOverridden] = useState<boolean>(
-    () => localStorage.getItem(STORAGE_KEY) !== null,
-  );
+  const [mode, setModeState] = useState<ThemeMode>(initialMode);
+  const [osDark, setOsDark] = useState<boolean>(osPrefersDark);
 
-  // Apply the attribute the CSS keys off of.
+  // Track OS preference (only matters while mode === "system").
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", mode);
-  }, [mode]);
-
-  // While not overridden, follow live OS changes.
-  useEffect(() => {
-    if (overridden) return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = (e: MediaQueryListEvent) => setMode(e.matches ? "dark" : "light");
+    const onChange = (e: MediaQueryListEvent) => setOsDark(e.matches);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [overridden]);
-
-  const toggle = useCallback(() => {
-    setMode((m) => {
-      const next = m === "dark" ? "light" : "dark";
-      localStorage.setItem(STORAGE_KEY, next);
-      setOverridden(true);
-      return next;
-    });
   }, []);
 
-  return <ThemeCtx.Provider value={{ mode, toggle }}>{children}</ThemeCtx.Provider>;
+  const resolved: "light" | "dark" = mode === "system" ? (osDark ? "dark" : "light") : mode;
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", resolved);
+  }, [resolved]);
+
+  const setMode = useCallback((m: ThemeMode) => {
+    localStorage.setItem(STORAGE_KEY, m);
+    setModeState(m);
+  }, []);
+
+  return <ThemeCtx.Provider value={{ mode, resolved, setMode }}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme(): ThemeState {

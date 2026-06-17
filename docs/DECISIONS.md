@@ -53,9 +53,11 @@ app.auth.admin-role    = planning-admin # value inside that claim that grants AD
   A loud WARN is logged on startup when mock mode is on.
 
 ### D4 — "Per-user" Kanban board filter (was open point #10.2)
-A user's board shows tasks where **`assignee == current user`**, scoped to the
-selected project. Documented in UI as "My tasks". Admins can additionally switch
-to an "all tasks" board view per project.
+A user's board defaults to tasks where **`assignee == current user`** ("Mine").
+The board also has an assignee filter — **Mine / each project member / All** — so
+any member can view another member's or all tasks (the permission model already
+grants members access to all tasks of their projects). Filtering is client-side
+over the project task list.
 
 ### D5 — Memberships & join requests (was open point #10.3 → "both")
 Both flows are implemented:
@@ -98,17 +100,17 @@ basename and a `404.html` (copy of `index.html`) handles deep links. The custom
 domain `sommer2019.de` is **not** used (it could not be verified/attached), so no
 `CNAME` is shipped.
 
-### D13 — Dark mode (OS default, manual override)
-Theming is driven by a `data-theme` attribute on `<html>`. The theme controller
-defaults to the **OS setting** (`prefers-color-scheme`) and follows live changes
-until the user manually toggles, after which the choice is persisted in
-`localStorage`. Dark values are defined under `[data-theme="dark"]` in
-`theme.css` per the shared spec.
+### D13 — Dark mode (System / Light / Dark)
+Theming is driven by a `data-theme` attribute on `<html>`, set by a header
+**segmented control with three modes: System / Light / Dark** (persisted in
+`localStorage`). `System` resolves against `prefers-color-scheme` and follows live
+OS changes. Dark values are defined under `[data-theme="dark"]` in `theme.css` per
+the shared spec (incl. dark `--green-color: #5DBB63`).
 
-### D14 — Internationalization (English/German)
+### D14 — Internationalization (System / DE / EN)
 Lightweight in-house i18n (`src/i18n`): flat en/de dictionaries, `{param}`
-interpolation, initial language from `localStorage` or `navigator.language`
-(de* → German), switchable via a header dropdown. Dates/weekday/month names use
+interpolation. A header **segmented control offers System / DE / EN** (persisted);
+`System` follows `navigator.language` (de* → German). Dates/weekday/month names use
 `Intl` with the active locale.
 
 ### D15 — Shared theme tokens

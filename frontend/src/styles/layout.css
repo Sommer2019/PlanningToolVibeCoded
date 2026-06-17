@@ -8,14 +8,42 @@
 .app-header {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  height: var(--header-height);
-  padding: 0 var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-height: var(--header-height);
+  padding: var(--space-2) var(--space-4);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+/* Segmented control (e.g. theme / language switchers) */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.segmented button {
+  border: none;
+  border-radius: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+.segmented button + button {
+  border-left: 1px solid var(--color-border);
+}
+.segmented button:hover:not([aria-pressed="true"]) {
+  background: var(--color-surface-alt);
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-weight: var(--font-weight-bold);
 }
 .app-header h1 {
   font-size: var(--font-size-lg);

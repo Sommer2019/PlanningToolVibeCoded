@@ -1,37 +1,46 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { detectLang, translate } from "./translations";
-import type { Lang } from "./translations";
+import { initialLangPref, resolveLang, systemLang, translate } from "./translations";
+import type { Lang, LangPref } from "./translations";
 import { setLocale } from "../util/format";
 
 interface I18n {
+  /** Effective language actually used for rendering. */
   lang: Lang;
-  setLang: (l: Lang) => void;
+  /** The user's chosen preference (system follows the browser). */
+  pref: LangPref;
+  setPref: (p: LangPref) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const I18nCtx = createContext<I18n | undefined>(undefined);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() => detectLang());
+  const [pref, setPrefState] = useState<LangPref>(() => initialLangPref());
+  const [sysLang, setSysLang] = useState<Lang>(() => systemLang());
+
+  // React to OS language changes while on "system".
+  useEffect(() => {
+    const onLang = () => setSysLang(systemLang());
+    window.addEventListener("languagechange", onLang);
+    return () => window.removeEventListener("languagechange", onLang);
+  }, []);
+
+  const lang: Lang = pref === "system" ? sysLang : resolveLang(pref);
 
   useEffect(() => {
     setLocale(lang);
     document.documentElement.lang = lang;
   }, [lang]);
 
-  const setLang = useCallback((l: Lang) => {
-    localStorage.setItem("planning_lang", l);
-    setLangState(l);
+  const setPref = useCallback((p: LangPref) => {
+    localStorage.setItem("planning_lang", p);
+    setPrefState(p);
   }, []);
 
   const value = useMemo<I18n>(
-    () => ({
-      lang,
-      setLang,
-      t: (key, params) => translate(lang, key, params),
-    }),
-    [lang, setLang],
+    () => ({ lang, pref, setPref, t: (key, params) => translate(lang, key, params) }),
+    [lang, pref, setPref],
   );
 
   return <I18nCtx.Provider value={value}>{children}</I18nCtx.Provider>;

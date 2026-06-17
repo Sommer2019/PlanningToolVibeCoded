@@ -1,6 +1,8 @@
 export type Lang = "en" | "de";
+export type LangPref = "system" | "en" | "de";
 
 export const LANGS: Lang[] = ["en", "de"];
+export const LANG_PREFS: LangPref[] = ["system", "en", "de"];
 
 type Dict = Record<string, string>;
 
@@ -27,6 +29,11 @@ const en: Dict = {
   "common.copy": "Copy",
   "common.actingAs": "Acting as",
   "common.language": "Language",
+  "common.theme": "Theme",
+  "theme.system": "System",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "lang.system": "System",
 
   "projects.title": "Projects",
   "projects.new": "+ New project",
@@ -47,6 +54,9 @@ const en: Dict = {
   "board.myTasks": "My tasks",
   "board.allTasks": "All tasks",
   "board.allTasksOption": "All tasks (owner/admin)",
+  "board.filter.mine": "Mine",
+  "board.filter.all": "All",
+  "board.filter.label": "Show",
   "board.newTask": "+ New task",
   "board.empty": "No tasks on this board yet.",
   "board.lock": "Lock",
@@ -132,6 +142,11 @@ const de: Dict = {
   "common.copy": "Kopieren",
   "common.actingAs": "Angemeldet als",
   "common.language": "Sprache",
+  "common.theme": "Design",
+  "theme.system": "System",
+  "theme.light": "Hell",
+  "theme.dark": "Dunkel",
+  "lang.system": "System",
 
   "projects.title": "Projekte",
   "projects.new": "+ Neues Projekt",
@@ -153,6 +168,9 @@ const de: Dict = {
   "board.myTasks": "Meine Aufgaben",
   "board.allTasks": "Alle Aufgaben",
   "board.allTasksOption": "Alle Aufgaben (Eigentümer/Admin)",
+  "board.filter.mine": "Meins",
+  "board.filter.all": "Alle",
+  "board.filter.label": "Anzeigen",
   "board.newTask": "+ Neue Aufgabe",
   "board.empty": "Noch keine Aufgaben auf diesem Board.",
   "board.lock": "Sperren",
@@ -228,8 +246,16 @@ export function translate(lang: Lang, key: string, params?: Record<string, strin
   return s;
 }
 
-export function detectLang(): Lang {
-  const stored = localStorage.getItem("planning_lang");
-  if (stored === "en" || stored === "de") return stored;
+/** Language implied by the OS/browser. */
+export function systemLang(): Lang {
   return navigator.language.toLowerCase().startsWith("de") ? "de" : "en";
+}
+
+export function initialLangPref(): LangPref {
+  const stored = localStorage.getItem("planning_lang");
+  return stored === "system" || stored === "en" || stored === "de" ? stored : "system";
+}
+
+export function resolveLang(pref: LangPref): Lang {
+  return pref === "system" ? systemLang() : pref;
 }

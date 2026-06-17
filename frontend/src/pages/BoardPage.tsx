@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
-import type { BoardScope, Task } from "../api";
+import type { Task } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/I18nContext";
 import { useProjectCtx } from "./ProjectLayout";
@@ -9,11 +9,15 @@ import { TaskFormDialog } from "../components/TaskFormDialog";
 import { statusColor } from "../util/statusColor";
 import { formatDate } from "../util/format";
 
+// Special filter values; any other value is a concrete assignee userRef.
+const MINE = "__mine__";
+const ALL = "__all__";
+
 export function BoardPage() {
   const { project, statuses, members, isOwnerOrAdmin } = useProjectCtx();
   const { me } = useAuth();
   const { t } = useI18n();
-  const [scope, setScope] = useState<BoardScope>("me");
+  const [filter, setFilter] = useState<string>(MINE);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,11 +26,12 @@ export function BoardPage() {
   const [editing, setEditing] = useState<Task | null>(null);
   const [creating, setCreating] = useState(false);
 
+  // Any project member may see all tasks of the project (then filter client-side).
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      setTasks(await api.getBoard(project.id, scope));
+      setTasks(await api.listProjectTasks(project.id));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -37,7 +42,15 @@ export function BoardPage() {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project.id, scope]);
+  }, [project.id]);
+
+  const memberRefs = members.filter((m) => m.status === "MEMBER").map((m) => m.userRef);
+
+  const shown = useMemo(() => {
+    if (filter === ALL) return tasks;
+    if (filter === MINE) return tasks.filter((t) => t.assignee === me?.subject);
+    return tasks.filter((t) => t.assignee === filter);
+  }, [tasks, filter, me]);
 
   function canEdit(t: Task): boolean {
     return !t.locked || Boolean(me?.admin) || t.createdBy === me?.subject;
@@ -51,7 +64,7 @@ export function BoardPage() {
     try {
       await api.updateTaskStatus(taskId, statusId);
     } catch (e) {
-      setTasks(prev); // revert
+      setTasks(prev);
       setError(e instanceof Error ? e.message : String(e));
     }
   }
@@ -78,17 +91,18 @@ export function BoardPage() {
   return (
     <div className="col">
       <div className="toolbar">
-        <strong>{scope === "me" ? t("board.myTasks") : t("board.allTasks")}</strong>
-        {isOwnerOrAdmin && (
-          <select
-            style={{ width: "auto" }}
-            value={scope}
-            onChange={(e) => setScope(e.target.value as BoardScope)}
-          >
-            <option value="me">{t("board.myTasks")}</option>
-            <option value="all">{t("board.allTasksOption")}</option>
+        <label className="row" style={{ margin: 0 }}>
+          <span className="muted">{t("board.filter.label")}</span>
+          <select style={{ width: "auto" }} value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <option value={MINE}>{t("board.filter.mine")}</option>
+            {memberRefs.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+            <option value={ALL}>{t("board.filter.all")}</option>
           </select>
-        )}
+        </label>
         <span className="spacer" />
         <button onClick={() => setCreating(true)}>{t("board.newTask")}</button>
       </div>
@@ -96,12 +110,12 @@ export function BoardPage() {
       {error && <ErrorBanner message={error} />}
       {loading ? (
         <Spinner />
-      ) : tasks.length === 0 ? (
+      ) : shown.length === 0 ? (
         <Empty message={t("board.empty")} />
       ) : (
         <div className="board">
           {statuses.map((s) => {
-            const colTasks = tasks.filter((t) => t.statusId === s.id);
+            const colTasks = shown.filter((t) => t.statusId === s.id);
             return (
               <section
                 key={s.id}
