@@ -49,7 +49,9 @@ services:
     #   - "8004:8004"   # local debugging only
     labels:
       - traefik.enable=true
-      - traefik.http.routers.planning-api.rule=PathPrefix(`/api/planning`)
+      - traefik.http.routers.planning-api.rule=PathPrefix(`/cpp-api/planning`)
+      - traefik.http.routers.planning-api.entrypoints=websecure
+      - traefik.http.routers.planning-api.tls.certresolver=letsencrypt
       - traefik.http.services.planning-api.loadbalancer.server.port=8004
 
   planning-frontend:
