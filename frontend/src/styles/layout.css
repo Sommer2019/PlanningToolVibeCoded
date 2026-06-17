@@ -282,15 +282,17 @@
   background: var(--color-surface-alt);
   color: var(--color-text-muted);
 }
-.calendar-cell.today .calendar-daynum {
-  background: var(--color-primary);
-  color: #fff;
-  border-radius: 50%;
+.calendar-daynum {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
+  border-radius: 50%;
+}
+.calendar-cell.today .calendar-daynum {
+  background: var(--color-primary);
+  color: #fff;
 }
 .calendar-event {
   display: block;

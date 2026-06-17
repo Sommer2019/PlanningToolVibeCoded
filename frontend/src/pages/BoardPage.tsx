@@ -148,6 +148,36 @@ export function BoardPage() {
     }
   }
 
+  async function moveStatusLeft(index: number) {
+    if (index === 0) return;
+    const current = statuses[index];
+    const prev = statuses[index - 1];
+    try {
+      await Promise.all([
+        api.updateStatus(current.id, current.name, prev.order),
+        api.updateStatus(prev.id, prev.name, current.order),
+      ]);
+      reloadProject();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function moveStatusRight(index: number) {
+    if (index === statuses.length - 1) return;
+    const current = statuses[index];
+    const next = statuses[index + 1];
+    try {
+      await Promise.all([
+        api.updateStatus(current.id, current.name, next.order),
+        api.updateStatus(next.id, next.name, current.order),
+      ]);
+      reloadProject();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   return (
     <div className="col">
       <div className="toolbar">
@@ -199,7 +229,7 @@ export function BoardPage() {
         <Empty message={t("board.empty")} />
       ) : (
         <div className="board">
-          {statuses.map((s) => {
+          {statuses.map((s, i) => {
             const colTasks = shown.filter((t) => t.statusId === s.id);
             return (
               <section
@@ -220,6 +250,26 @@ export function BoardPage() {
                 <header>
                   <span className="dot" style={{ background: statusColor(s.name) }} />
                   {s.name}
+                  {me?.admin && (
+                    <div className="row" style={{ gap: "4px", marginLeft: "8px" }}>
+                      <button 
+                        data-variant="ghost" 
+                        style={{ padding: "0 4px" }} 
+                        disabled={i === 0} 
+                        onClick={() => moveStatusLeft(i)}
+                      >
+                        &lt;
+                      </button>
+                      <button 
+                        data-variant="ghost" 
+                        style={{ padding: "0 4px" }} 
+                        disabled={i === statuses.length - 1} 
+                        onClick={() => moveStatusRight(i)}
+                      >
+                        &gt;
+                      </button>
+                    </div>
+                  )}
                   <span className="spacer" />
                   <span className="badge">{colTasks.length}</span>
                 </header>
