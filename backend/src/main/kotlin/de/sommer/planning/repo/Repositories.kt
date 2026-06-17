@@ -41,5 +41,7 @@ interface CalendarEntryRepository : JpaRepository<CalendarEntry, UUID> {
 
 interface CalendarFeedTokenRepository : JpaRepository<CalendarFeedToken, UUID> {
     fun findByToken(token: String): CalendarFeedToken?
-    fun findByUserRefAndProjectId(userRef: String?, projectId: UUID?): CalendarFeedToken?
+    fun findByUserRef(userRef: String): List<CalendarFeedToken>
+    fun findByUserRefAndProjectId(userRef: String, projectId: UUID): CalendarFeedToken?
+    fun findByUserRefAndProjectIdIsNull(userRef: String): CalendarFeedToken?
 }
