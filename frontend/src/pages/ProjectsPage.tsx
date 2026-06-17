@@ -7,9 +7,11 @@ import { useAsync } from "../hooks/useAsync";
 import { Spinner, ErrorBanner, Empty } from "../components/Feedback";
 import { Modal } from "../components/Modal";
 import { formatDate } from "../util/format";
+import { useAuth } from "../auth/AuthContext";
 
 export function ProjectsPage() {
   const { t } = useI18n();
+  const { me } = useAuth();
   const { data, loading, error, reload } = useAsync(() => api.listProjects(), []);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -45,6 +47,16 @@ export function ProjectsPage() {
     }
   }
 
+  async function handleDeleteProject(id: string) {
+    if (!window.confirm("Bist du sicher? Alle Tasks und das Projekt werden unwiderruflich gelöscht.")) return;
+    try {
+      await api.deleteProject(id);
+      reload();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   return (
     <div className="col">
       <div className="toolbar">
@@ -61,9 +73,17 @@ export function ProjectsPage() {
         <div className="grid-cards">
           {data.map((p) => (
             <article key={p.id} className="col">
-              <h3 style={{ margin: 0 }}>
-                <Link to={`/projects/${p.id}/board`}>{p.name}</Link>
-              </h3>
+              <div className="row wrap">
+                <h3 style={{ margin: 0 }}>
+                  <Link to={`/projects/${p.id}/board`}>{p.name}</Link>
+                </h3>
+                <span className="spacer" />
+                {(me?.admin || p.createdBy === me?.subject) && (
+                  <button data-variant="ghost" onClick={() => handleDeleteProject(p.id)} title="Projekt löschen">
+                    🗑️
+                  </button>
+                )}
+              </div>
               <p className="muted" style={{ margin: 0, minHeight: 20 }}>
                 {p.description ?? t("projects.noDescription")}
               </p>

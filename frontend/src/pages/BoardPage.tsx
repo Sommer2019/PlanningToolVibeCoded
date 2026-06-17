@@ -8,6 +8,7 @@ import { Spinner, ErrorBanner, Empty } from "../components/Feedback";
 import { TaskFormDialog } from "../components/TaskFormDialog";
 import { statusColor } from "../util/statusColor";
 import { formatDate } from "../util/format";
+import { userColor } from "../util/userColor";
 
 // Special filter values; any other value is a concrete assignee userRef.
 const MINE = "__mine__";
@@ -56,13 +57,32 @@ export function BoardPage() {
     return !t.locked || Boolean(me?.admin) || t.createdBy === me?.subject;
   }
 
-  async function moveTo(taskId: string, statusId: string) {
+  async function moveTo(taskId: string, statusId: string, statusName: string) {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || task.statusId === statusId) return;
+    
+    let newAssignee = task.assignee;
+    if (statusName.toLowerCase().includes("progress") && me?.subject) {
+      newAssignee = me.subject;
+    }
+
     const prev = tasks;
-    setTasks((ts) => ts.map((t) => (t.id === taskId ? { ...t, statusId } : t)));
+    setTasks((ts) => ts.map((t) => (t.id === taskId ? { ...t, statusId, assignee: newAssignee } : t)));
     try {
-      await api.updateTaskStatus(taskId, statusId);
+      if (newAssignee !== task.assignee) {
+        await api.updateTask(taskId, {
+          title: task.title,
+          description: task.description,
+          assignee: newAssignee,
+          statusId,
+          plannedStart: task.plannedStart,
+          plannedEnd: task.plannedEnd,
+          actualStart: task.actualStart,
+          actualEnd: task.actualEnd,
+        });
+      } else {
+        await api.updateTaskStatus(taskId, statusId);
+      }
     } catch (e) {
       setTasks(prev);
       setError(e instanceof Error ? e.message : String(e));
@@ -129,7 +149,7 @@ export function BoardPage() {
                   e.preventDefault();
                   setDragOver(null);
                   const id = e.dataTransfer.getData("text/plain") || dragId;
-                  if (id) void moveTo(id, s.id);
+                  if (id) void moveTo(id, s.id, s.name);
                 }}
               >
                 <header>
@@ -143,6 +163,7 @@ export function BoardPage() {
                     key={task.id}
                     className={`card${dragId === task.id ? " dragging" : ""}`}
                     draggable={canEdit(task)}
+                    style={{ borderLeft: `3px solid ${userColor(task.assignee)}` }}
                     onDragStart={(e) => {
                       e.dataTransfer.setData("text/plain", task.id);
                       setDragId(task.id);

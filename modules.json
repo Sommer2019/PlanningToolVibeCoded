@@ -1,0 +1,7 @@
+{
+  "name": "Projektplanung",
+  "team": 4,
+  "route": "/planning",
+  "healthCheck": "http://planning-backend:8004/health",
+  "docsUrl": "http://planning-backend:8004/openapi.json"
+}

@@ -48,15 +48,15 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
     setError(null);
     if (task) {
       setTitle(task.title);
-      setDescription(task.description);
-      setAssignee(task.assignee);
+      setDescription(task.description ?? "");
+      setAssignee(task.assignee ?? "");
       setStatusId(task.statusId);
       setPlannedStart(toLocalInput(task.plannedStart));
       setPlannedEnd(toLocalInput(task.plannedEnd));
     } else {
       setTitle("");
       setDescription("");
-      setAssignee(memberRefs[0] ?? "");
+      setAssignee("");
       setStatusId(statuses[0]?.id ?? "");
       setPlannedStart(defaultStart());
       setPlannedEnd(defaultEnd());
@@ -67,7 +67,7 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!title.trim() || !description.trim() || !assignee || !statusId) {
+    if (!title.trim() || !statusId) {
       setError(t("task.form.errRequired"));
       return;
     }
@@ -77,8 +77,8 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
     }
     const input: TaskInput = {
       title: title.trim(),
-      description: description.trim(),
-      assignee,
+      description: description.trim() || null,
+      assignee: assignee || null,
       statusId,
       plannedStart: fromLocalInput(plannedStart),
       plannedEnd: fromLocalInput(plannedEnd),
@@ -108,7 +108,6 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
           <label htmlFor="t-desc">{t("task.form.description")}</label>
           <textarea
             id="t-desc"
-            required
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
@@ -117,7 +116,7 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
           <fieldset style={{ flex: 1, minWidth: 180 }}>
             <label htmlFor="t-assignee">{t("task.form.assignee")}</label>
             <select id="t-assignee" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-              {memberRefs.length === 0 && <option value="">{t("task.form.noMembers")}</option>}
+              <option value="">{t("task.form.noAssignee")}</option>
               {memberRefs.map((m) => (
                 <option key={m} value={m}>
                   {m}

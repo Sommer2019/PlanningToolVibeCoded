@@ -27,12 +27,12 @@ class Task(
     @Column(nullable = false)
     var title: String,
 
-    @Column(columnDefinition = "text", nullable = false)
-    var description: String,
+    @Column(columnDefinition = "text")
+    var description: String? = null,
 
     /** userRef (JWT subject) of the assignee. Required. */
-    @Column(nullable = false)
-    var assignee: String,
+    @Column
+    var assignee: String? = null,
 
     @Column(name = "status_id", nullable = false)
     var statusId: UUID,
