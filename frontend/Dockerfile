@@ -9,7 +9,7 @@ RUN npm ci
 COPY . .
 
 # Served under /planning by the gateway; API is reached origin-relative at
-# /api/planning (so VITE_API_BASE_URL stays empty = same origin).
+# /cpp-api/planning (so VITE_API_BASE_URL stays empty = same origin).
 ARG BASE_PATH=/planning/
 ARG VITE_API_BASE_URL=
 ARG VITE_OIDC_AUTHORITY=https://hackathon.amogusdrip.de/auth/application/o/vibecode/

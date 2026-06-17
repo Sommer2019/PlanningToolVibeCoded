@@ -4,7 +4,7 @@
 #
 # Routing (Traefik, TLS terminated at the gateway -> plain HTTP to the services):
 #   PathPrefix(`/planning`)      -> planning-frontend (nginx); prefix stripped
-#   PathPrefix(`/api/planning`)  -> planning-backend (served natively, no rewrite)
+#   PathPrefix(`/cpp-api/planning`)  -> planning-backend (served natively, no rewrite)
 #
 # The backend is HTTP-only on 8004 by design — never send TLS to it directly.
 # For local debugging without a gateway, uncomment the `ports:` blocks.

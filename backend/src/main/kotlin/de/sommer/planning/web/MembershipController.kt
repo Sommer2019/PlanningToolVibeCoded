@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/planning/projects/{projectId}")
+@RequestMapping("/cpp-api/planning/projects/{projectId}")
 @Tag(name = "Memberships")
 class MembershipController(
     private val memberships: MembershipService,

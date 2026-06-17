@@ -127,9 +127,9 @@ port `8004`):
   the single artifact handed to the orchestrator. Routing:
   - `PathPrefix(/planning)` → **planning-frontend** (nginx serving the built SPA);
     the prefix is stripped, and the SPA is built with base `/planning/`.
-  - `PathPrefix(/api/planning)` → **planning-backend** (port 8004). The backend
-    serves its REST API **natively under `/api/planning`** (controllers were moved
-    from `/api/...` to `/api/planning/...`), so the gateway needs **no path
+  - `PathPrefix(/cpp-api/planning)` → **planning-backend** (port 8004). The backend
+    serves its REST API **natively under `/cpp-api/planning`** (controllers were moved
+    from `/api/...` to `/cpp-api/planning/...`), so the gateway needs **no path
     rewrite** — just forward. `/health` and `/openapi.json` stay at the root for
     the internal monitoring/discovery URLs.
   TLS is terminated at the gateway; the backend is HTTP-only on 8004.

@@ -56,63 +56,63 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export const httpApi: Api = {
-  getMe: () => request<Me>("GET", "/api/planning/me"),
-  getMockUsers: () => request<MockUser[]>("GET", "/api/planning/auth/mock-users"),
+  getMe: () => request<Me>("GET", "/cpp-api/planning/me"),
+  getMockUsers: () => request<MockUser[]>("GET", "/cpp-api/planning/auth/mock-users"),
 
-  listProjects: () => request<Project[]>("GET", "/api/planning/projects"),
-  getProject: (id) => request<Project>("GET", `/api/planning/projects/${id}`),
-  createProject: (input: CreateProjectInput) => request<Project>("POST", "/api/planning/projects", input),
-  updateProject: (id, input) => request<Project>("PUT", `/api/planning/projects/${id}`, input),
-  deleteProject: (id) => request<void>("DELETE", `/api/planning/projects/${id}`),
+  listProjects: () => request<Project[]>("GET", "/cpp-api/planning/projects"),
+  getProject: (id) => request<Project>("GET", `/cpp-api/planning/projects/${id}`),
+  createProject: (input: CreateProjectInput) => request<Project>("POST", "/cpp-api/planning/projects", input),
+  updateProject: (id, input) => request<Project>("PUT", `/cpp-api/planning/projects/${id}`, input),
+  deleteProject: (id) => request<void>("DELETE", `/cpp-api/planning/projects/${id}`),
 
-  listMembers: (projectId) => request<Membership[]>("GET", `/api/planning/projects/${projectId}/members`),
+  listMembers: (projectId) => request<Membership[]>("GET", `/cpp-api/planning/projects/${projectId}/members`),
   addMember: (projectId, userRef, role) =>
-    request<Membership>("POST", `/api/planning/projects/${projectId}/members`, { userRef, role }),
-  requestJoin: (projectId) => request<Membership>("POST", `/api/planning/projects/${projectId}/join-request`),
+    request<Membership>("POST", `/cpp-api/planning/projects/${projectId}/members`, { userRef, role }),
+  requestJoin: (projectId) => request<Membership>("POST", `/cpp-api/planning/projects/${projectId}/join-request`),
   listJoinRequests: (projectId) =>
-    request<Membership[]>("GET", `/api/planning/projects/${projectId}/join-requests`),
+    request<Membership[]>("GET", `/cpp-api/planning/projects/${projectId}/join-requests`),
   approveMember: (projectId, membershipId) =>
-    request<Membership>("POST", `/api/planning/projects/${projectId}/members/${membershipId}/approve`),
+    request<Membership>("POST", `/cpp-api/planning/projects/${projectId}/members/${membershipId}/approve`),
   removeMember: (projectId, membershipId) =>
-    request<void>("DELETE", `/api/planning/projects/${projectId}/members/${membershipId}`),
+    request<void>("DELETE", `/cpp-api/planning/projects/${projectId}/members/${membershipId}`),
 
   listStatuses: (projectId) =>
-    request<Status[]>("GET", `/api/planning/statuses${projectId ? `?projectId=${projectId}` : ""}`),
+    request<Status[]>("GET", `/cpp-api/planning/statuses${projectId ? `?projectId=${projectId}` : ""}`),
   createStatus: (name, projectId, order) =>
-    request<Status>("POST", "/api/planning/statuses", { name, projectId: projectId ?? null, order }),
+    request<Status>("POST", "/cpp-api/planning/statuses", { name, projectId: projectId ?? null, order }),
   updateStatus: (id, name, order) =>
-    request<Status>("PUT", `/api/planning/statuses/${id}`, { name, order }),
-  deleteStatus: (id) => request<void>("DELETE", `/api/planning/statuses/${id}`),
+    request<Status>("PUT", `/cpp-api/planning/statuses/${id}`, { name, order }),
+  deleteStatus: (id) => request<void>("DELETE", `/cpp-api/planning/statuses/${id}`),
 
-  listProjectTasks: (projectId) => request<Task[]>("GET", `/api/planning/projects/${projectId}/tasks`),
+  listProjectTasks: (projectId) => request<Task[]>("GET", `/cpp-api/planning/projects/${projectId}/tasks`),
   getBoard: (projectId, scope: BoardScope) =>
-    request<Task[]>("GET", `/api/planning/projects/${projectId}/board?scope=${scope}`),
+    request<Task[]>("GET", `/cpp-api/planning/projects/${projectId}/board?scope=${scope}`),
   createTask: (projectId, input: TaskInput) =>
-    request<Task>("POST", `/api/planning/projects/${projectId}/tasks`, input),
-  updateTask: (id, input) => request<Task>("PUT", `/api/planning/tasks/${id}`, input),
+    request<Task>("POST", `/cpp-api/planning/projects/${projectId}/tasks`, input),
+  updateTask: (id, input) => request<Task>("PUT", `/cpp-api/planning/tasks/${id}`, input),
   updateTaskStatus: (id, statusId) =>
-    request<Task>("PATCH", `/api/planning/tasks/${id}/status`, { statusId }),
+    request<Task>("PATCH", `/cpp-api/planning/tasks/${id}/status`, { statusId }),
   setTaskLocked: (id, locked) =>
-    request<Task>("POST", `/api/planning/tasks/${id}/${locked ? "lock" : "unlock"}`),
-  deleteTask: (id) => request<void>("DELETE", `/api/planning/tasks/${id}`),
+    request<Task>("POST", `/cpp-api/planning/tasks/${id}/${locked ? "lock" : "unlock"}`),
+  deleteTask: (id) => request<void>("DELETE", `/cpp-api/planning/tasks/${id}`),
 
   listCalendarEntries: (projectId) =>
     request<CalendarEntry[]>(
       "GET",
-      `/api/planning/calendar-entries${projectId ? `?projectId=${projectId}` : ""}`,
+      `/cpp-api/planning/calendar-entries${projectId ? `?projectId=${projectId}` : ""}`,
     ),
   createCalendarEntry: (input: CalendarEntryInput) =>
-    request<CalendarEntry>("POST", "/api/planning/calendar-entries", input),
+    request<CalendarEntry>("POST", "/cpp-api/planning/calendar-entries", input),
   updateCalendarEntry: (id, input) =>
-    request<CalendarEntry>("PUT", `/api/planning/calendar-entries/${id}`, input),
-  deleteCalendarEntry: (id) => request<void>("DELETE", `/api/planning/calendar-entries/${id}`),
+    request<CalendarEntry>("PUT", `/cpp-api/planning/calendar-entries/${id}`, input),
+  deleteCalendarEntry: (id) => request<void>("DELETE", `/cpp-api/planning/calendar-entries/${id}`),
 
-  listFeedTokens: () => request<FeedToken[]>("GET", "/api/planning/calendar/feed-tokens"),
+  listFeedTokens: () => request<FeedToken[]>("GET", "/cpp-api/planning/calendar/feed-tokens"),
   createFeedToken: (projectId) =>
-    request<FeedToken>("POST", "/api/planning/calendar/feed-tokens", { projectId: projectId ?? null }),
-  deleteFeedToken: (id) => request<void>("DELETE", `/api/planning/calendar/feed-tokens/${id}`),
+    request<FeedToken>("POST", "/cpp-api/planning/calendar/feed-tokens", { projectId: projectId ?? null }),
+  deleteFeedToken: (id) => request<void>("DELETE", `/cpp-api/planning/calendar/feed-tokens/${id}`),
 
-  getLeaderboard: (projectId) => request<LeaderboardEntry[]>("GET", `/api/planning/projects/${projectId}/leaderboard`),
+  getLeaderboard: (projectId) => request<LeaderboardEntry[]>("GET", `/cpp-api/planning/projects/${projectId}/leaderboard`),
 
   // Absolute subscribe URL. BASE_URL may be origin-relative ("") behind the
   // gateway, so fall back to the page origin to keep the link copy-pasteable.

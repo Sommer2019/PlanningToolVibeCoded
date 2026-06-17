@@ -13,6 +13,6 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "Health")
 class HealthController {
 
-    @GetMapping("/health", "/planning/health", "/api/planning/health")
+    @GetMapping("/health", "/planning/health", "/cpp-api/planning/health")
     fun health(): Map<String, String> = mapOf("status" to "ok")
 }

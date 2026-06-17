@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/planning/statuses")
+@RequestMapping("/cpp-api/planning/statuses")
 @Tag(name = "Statuses")
 class StatusController(
     private val statuses: StatusService,
