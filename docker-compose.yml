@@ -47,12 +47,19 @@ services:
       SPRING_DATASOURCE_USERNAME: planning
       SPRING_DATASOURCE_PASSWORD: planning
       APP_CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:4173"
+    networks:
+      - default
+      - cpp-edge
     ports:
       - "8004:8004"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.planning-api.rule=PathPrefix(`/api`)
+      - traefik.http.routers.planning-api.rule=PathPrefix(`/api/planning`)
       - traefik.http.services.planning-api.loadbalancer.server.port=8004
 
 volumes:
   pgdata:
+
+networks:
+  cpp-edge:
+    external: true
