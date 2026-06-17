@@ -1,0 +1,77 @@
+# CPP — Team 4 (Projektplanung). Self-contained stack: Postgres + backend + SPA.
+# Everything is configured here; no external .env is needed. Real Authentik auth
+# is ON.
+#
+# Routing (Traefik, TLS terminated at the gateway -> plain HTTP to the services):
+#   PathPrefix(`/planning`)      -> planning-frontend (nginx); prefix stripped
+#   PathPrefix(`/api/planning`)  -> planning-backend (served natively, no rewrite)
+#
+# The backend is HTTP-only on 8004 by design — never send TLS to it directly.
+# For local debugging without a gateway, uncomment the `ports:` blocks.
+
+services:
+  planning-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: planning
+      POSTGRES_USER: planning
+      POSTGRES_PASSWORD: planning
+    volumes:
+      - planning-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U planning -d planning"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  planning-backend:
+    build:
+      context: ../backend
+      dockerfile: ../docker/Dockerfile
+    image: ghcr.io/sommer2019/planningtoolvibecoded-backend:latest
+    depends_on:
+      planning-postgres:
+        condition: service_healthy
+    environment:
+      # --- Real Authentik auth (mock OFF) ---
+      APP_AUTH_MOCK: "false"
+      APP_AUTH_ISSUER_URI: "https://hackathon.amogusdrip.de/auth/application/o/vibecode/"
+      APP_AUTH_ROLES_CLAIM: "groups"
+      APP_AUTH_ADMIN_ROLE: "planning-admin"
+      # Same-origin behind the gateway; listed for any cross-origin case.
+      APP_CORS_ALLOWED_ORIGINS: "https://hackathon.amogusdrip.de"
+      # --- Database ---
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://planning-postgres:5432/planning"
+      SPRING_DATASOURCE_USERNAME: "planning"
+      SPRING_DATASOURCE_PASSWORD: "planning"
+      SERVER_PORT: "8004"
+    # ports:
+    #   - "8004:8004"   # local debugging only
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.planning-api.rule=PathPrefix(`/api/planning`)
+      - traefik.http.services.planning-api.loadbalancer.server.port=8004
+
+  planning-frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        BASE_PATH: "/planning/"
+        VITE_API_BASE_URL: ""
+        VITE_OIDC_AUTHORITY: "https://hackathon.amogusdrip.de/auth/application/o/vibecode/"
+        VITE_OIDC_CLIENT_ID: "oIgnzizlgBgGKtC1SJBvM6HqEtasIMXxkTsIN8O9"
+    image: ghcr.io/sommer2019/planningtoolvibecoded-frontend:latest
+    depends_on:
+      - planning-backend
+    # ports:
+    #   - "8014:80"     # local debugging only
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.planning-web.rule=PathPrefix(`/planning`)
+      - traefik.http.routers.planning-web.middlewares=planning-web-strip
+      - traefik.http.services.planning-web.loadbalancer.server.port=80
+      - traefik.http.middlewares.planning-web-strip.stripprefix.prefixes=/planning
+
+volumes:
+  planning-pgdata:
