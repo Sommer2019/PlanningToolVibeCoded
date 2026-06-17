@@ -1,28 +1,18 @@
 package de.sommer.planning
 
-import com.fasterxml.jackson.databind.JsonNode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.get
-import org.springframework.test.web.servlet.patch
-import org.springframework.test.web.servlet.post
-import org.springframework.test.web.servlet.put
 
 private const val TODO_STATUS = "00000000-0000-0000-0000-000000000001"
 private const val IN_PROGRESS_STATUS = "00000000-0000-0000-0000-000000000002"
 
 class TaskApiTest : AbstractIntegrationTest() {
 
-    private fun MockMvc.createProject(user: String, name: String): String {
-        val res = post("/api/projects") {
-            header("X-Mock-User", user)
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"name":"$name"}"""
-        }.andReturn().response.contentAsString
-        return objectMapper.readTree(res)["id"].asText()
+    private fun createProject(user: String, name: String): String {
+        val res = request("POST", "/api/projects", """{"name":"$name"}""", user)
+        assertEquals(201, res.statusCode())
+        return field(res, "id")
     }
 
     private fun taskBody(statusId: String = TODO_STATUS, title: String = "Task A", assignee: String = "TestUser1") =
@@ -39,123 +29,83 @@ class TaskApiTest : AbstractIntegrationTest() {
 
     @Test
     fun `task lifecycle and per-user board`() {
-        val pid = mockMvc.createProject("TestUser1", "Lifecycle")
+        val pid = createProject("TestUser1", "Lifecycle")
 
-        val created = mockMvc.post("/api/projects/$pid/tasks") {
-            header("X-Mock-User", "TestUser1")
-            contentType = MediaType.APPLICATION_JSON
-            content = taskBody()
-        }.andExpect { status { isCreated() } }.andReturn().response.contentAsString
-        val taskId = objectMapper.readTree(created)["id"].asText()
+        val created = request("POST", "/api/projects/$pid/tasks", taskBody(), "TestUser1")
+        assertEquals(201, created.statusCode())
+        val taskId = field(created, "id")
 
         // Per-user board for TestUser1 shows the assigned task.
-        val board = mockMvc.get("/api/projects/$pid/board") {
-            header("X-Mock-User", "TestUser1")
-        }.andExpect { status { isOk() } }.andReturn().response.contentAsString
-        val ids = objectMapper.readTree(board).map { it["id"].asText() }
-        assertTrue(taskId in ids)
+        val board = request("GET", "/api/projects/$pid/board", user = "TestUser1")
+        assertEquals(200, board.statusCode())
+        assertTrue(board.body().contains(taskId))
 
         // Drag&drop status change.
-        mockMvc.patch("/api/tasks/$taskId/status") {
-            header("X-Mock-User", "TestUser1")
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"statusId":"$IN_PROGRESS_STATUS"}"""
-        }.andExpect { status { isOk() } }
+        val patched = request("PATCH", "/api/tasks/$taskId/status", """{"statusId":"$IN_PROGRESS_STATUS"}""", "TestUser1")
+        assertEquals(200, patched.statusCode())
 
-        val task = mockMvc.get("/api/tasks/$taskId") {
-            header("X-Mock-User", "TestUser1")
-        }.andReturn().response.contentAsString
-        assertEquals(IN_PROGRESS_STATUS, objectMapper.readTree(task)["statusId"].asText())
+        val task = request("GET", "/api/tasks/$taskId", user = "TestUser1")
+        assertEquals(IN_PROGRESS_STATUS, field(task, "statusId"))
     }
 
     @Test
     fun `required fields are validated server-side`() {
-        val pid = mockMvc.createProject("TestUser1", "Validation")
-        mockMvc.post("/api/projects/$pid/tasks") {
-            header("X-Mock-User", "TestUser1")
-            contentType = MediaType.APPLICATION_JSON
-            content = taskBody(title = "")
-        }.andExpect { status { isBadRequest() } }
+        val pid = createProject("TestUser1", "Validation")
+        val res = request("POST", "/api/projects/$pid/tasks", taskBody(title = ""), "TestUser1")
+        assertEquals(400, res.statusCode())
     }
 
     @Test
     fun `non-member cannot access project tasks`() {
-        val pid = mockMvc.createProject("TestUser1", "Private")
-        mockMvc.get("/api/projects/$pid/tasks") {
-            header("X-Mock-User", "TestUser2")
-        }.andExpect { status { isForbidden() } }
+        val pid = createProject("TestUser1", "Private")
+        val res = request("GET", "/api/projects/$pid/tasks", user = "TestUser2")
+        assertEquals(403, res.statusCode())
     }
 
     @Test
     fun `locked task editable only by admin or creator`() {
-        val pid = mockMvc.createProject("TestUser1", "Locking")
+        val pid = createProject("TestUser1", "Locking")
         // Owner adds TestUser2 as member.
-        mockMvc.post("/api/projects/$pid/members") {
-            header("X-Mock-User", "TestUser1")
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"userRef":"TestUser2"}"""
-        }.andExpect { status { isCreated() } }
+        val add = request("POST", "/api/projects/$pid/members", """{"userRef":"TestUser2"}""", "TestUser1")
+        assertEquals(201, add.statusCode())
 
-        val created = mockMvc.post("/api/projects/$pid/tasks") {
-            header("X-Mock-User", "TestUser1")
-            contentType = MediaType.APPLICATION_JSON
-            content = taskBody()
-        }.andReturn().response.contentAsString
-        val taskId = objectMapper.readTree(created)["id"].asText()
+        val created = request("POST", "/api/projects/$pid/tasks", taskBody(), "TestUser1")
+        val taskId = field(created, "id")
 
         // Admin locks it.
-        mockMvc.post("/api/tasks/$taskId/lock") {
-            header("X-Mock-User", "TestAdmin")
-        }.andExpect { status { isOk() } }
+        assertEquals(200, request("POST", "/api/tasks/$taskId/lock", user = "TestAdmin").statusCode())
 
         // A member who is not the creator cannot edit.
-        mockMvc.put("/api/tasks/$taskId") {
-            header("X-Mock-User", "TestUser2")
-            contentType = MediaType.APPLICATION_JSON
-            content = taskBody(title = "Hacked")
-        }.andExpect { status { isForbidden() } }
+        val forbidden = request("PUT", "/api/tasks/$taskId", taskBody(title = "Hacked"), "TestUser2")
+        assertEquals(403, forbidden.statusCode())
 
         // The creator still can.
-        mockMvc.put("/api/tasks/$taskId") {
-            header("X-Mock-User", "TestUser1")
-            contentType = MediaType.APPLICATION_JSON
-            content = taskBody(title = "Edited by creator")
-        }.andExpect { status { isOk() } }
+        val ok = request("PUT", "/api/tasks/$taskId", taskBody(title = "Edited by creator"), "TestUser1")
+        assertEquals(200, ok.statusCode())
     }
 
     @Test
     fun `admin can add project status and tasks can use it`() {
-        val pid = mockMvc.createProject("TestUser1", "Statuses")
+        val pid = createProject("TestUser1", "Statuses")
 
-        val statusRes = mockMvc.post("/api/statuses") {
-            header("X-Mock-User", "TestAdmin")
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"name":"Review","projectId":"$pid"}"""
-        }.andExpect { status { isCreated() } }.andReturn().response.contentAsString
-        val reviewId = objectMapper.readTree(statusRes)["id"].asText()
+        val statusRes = request("POST", "/api/statuses", """{"name":"Review","projectId":"$pid"}""", "TestAdmin")
+        assertEquals(201, statusRes.statusCode())
+        val reviewId = field(statusRes, "id")
 
         // Effective list contains defaults + the new project status.
-        val list: JsonNode = objectMapper.readTree(
-            mockMvc.get("/api/statuses?projectId=$pid") {
-                header("X-Mock-User", "TestUser1")
-            }.andReturn().response.contentAsString,
+        val list = request("GET", "/api/statuses?projectId=$pid", user = "TestUser1").body()
+        assertTrue(
+            listOf("Todo", "In Progress", "Done", "Review").all { list.contains("\"$it\"") },
+            "status list missing entries: $list",
         )
-        val names = list.map { it["name"].asText() }
-        assertTrue(names.containsAll(listOf("Todo", "In Progress", "Done", "Review")))
 
-        mockMvc.post("/api/projects/$pid/tasks") {
-            header("X-Mock-User", "TestUser1")
-            contentType = MediaType.APPLICATION_JSON
-            content = taskBody(statusId = reviewId)
-        }.andExpect { status { isCreated() } }
+        val taskRes = request("POST", "/api/projects/$pid/tasks", taskBody(statusId = reviewId), "TestUser1")
+        assertEquals(201, taskRes.statusCode())
     }
 
     @Test
     fun `non-admin cannot create global status`() {
-        mockMvc.post("/api/statuses") {
-            header("X-Mock-User", "TestUser1")
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"name":"Blocked"}"""
-        }.andExpect { status { isForbidden() } }
+        val res = request("POST", "/api/statuses", """{"name":"Blocked"}""", "TestUser1")
+        assertEquals(403, res.statusCode())
     }
 }

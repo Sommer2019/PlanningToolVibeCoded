@@ -11,7 +11,7 @@ class AudienceValidator(
 ) : OAuth2TokenValidator<Jwt> {
 
     override fun validate(token: Jwt): OAuth2TokenValidatorResult =
-        if (token.audience.contains(expectedAudience)) {
+        if (token.audience?.contains(expectedAudience) == true) {
             OAuth2TokenValidatorResult.success()
         } else {
             OAuth2TokenValidatorResult.failure(

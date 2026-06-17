@@ -15,12 +15,16 @@ This module is **one of several** in a larger system. It deliberately does
 ## Decisions
 
 ### D1 — Tech stack & versions
-- **Backend:** Kotlin + Spring Boot 3.4.x, built with Maven, Java 21 (LTS).
+- **Backend:** Kotlin 2.4.x + Spring Boot 4.1.x (Spring Framework 7 / Security 7),
+  built with Maven, Java 25.
 - **DB:** PostgreSQL 16.
 - **Frontend:** Vite + React + TypeScript, buildable as a static SPA.
-- **API docs:** springdoc-openapi (OpenAPI 3 + Swagger UI at `/swagger-ui.html`).
+- **API docs:** springdoc-openapi 3.x (OpenAPI 3 + Swagger UI at `/swagger-ui.html`).
 - **Migrations:** Flyway (SQL migrations, default statuses seeded).
 - **iCal:** ical4j for the read-only calendar feed.
+- **Tests:** Testcontainers 2.x (note: 2.0 renamed the modules to
+  `testcontainers-junit-jupiter` / `testcontainers-postgresql`; versions are
+  managed by the Spring Boot 4 BOM).
 
 Rationale: all mainstream, well-supported choices that match the spec.
 
@@ -85,6 +89,32 @@ mode the frontend uses an **in-memory mock API** with seed data and a dev
 user-switch dropdown (TestAdmin/TestUser1-3). No backend is required for the demo.
 When `VITE_MOCK_AUTH` is unset/false, the frontend talks to a real backend at
 `VITE_API_BASE_URL`.
+
+**Hosting:** served at the project Pages path
+`https://sommer2019.github.io/PlanningToolVibeCoded/`. The build sets Vite
+`base=/PlanningToolVibeCoded/` (workflow env `BASE_PATH`) so asset URLs resolve
+under that sub-path; `BrowserRouter` uses `import.meta.env.BASE_URL` as its
+basename and a `404.html` (copy of `index.html`) handles deep links. The custom
+domain `sommer2019.de` is **not** used (it could not be verified/attached), so no
+`CNAME` is shipped.
+
+### D13 — Dark mode (OS default, manual override)
+Theming is driven by a `data-theme` attribute on `<html>`. The theme controller
+defaults to the **OS setting** (`prefers-color-scheme`) and follows live changes
+until the user manually toggles, after which the choice is persisted in
+`localStorage`. Dark values are defined under `[data-theme="dark"]` in
+`theme.css` per the shared spec.
+
+### D14 — Internationalization (English/German)
+Lightweight in-house i18n (`src/i18n`): flat en/de dictionaries, `{param}`
+interpolation, initial language from `localStorage` or `navigator.language`
+(de* → German), switchable via a header dropdown. Dates/weekday/month names use
+`Intl` with the active locale.
+
+### D15 — Shared theme tokens
+`theme.css` carries the cross-module design-token contract (Noto Sans, palette,
+spacing, `.btn`/`.input-field` utilities) and maps those tokens onto the semantic
+names the tag-level CSS consumes, so the theme stays swappable across modules.
 
 ### D10 — CSS strategy (spec §5)
 - Styling is primarily on **HTML tag level** (element selectors: `button`,

@@ -2,7 +2,7 @@
 # Build context = ./backend (see docker-compose.yml and CI).
 
 # ---- Stage 1: build ----
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-25 AS build
 WORKDIR /workspace
 
 # Cache dependencies first.

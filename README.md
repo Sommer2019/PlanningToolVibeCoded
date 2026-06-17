@@ -41,12 +41,12 @@ demo there is a **mock auth mode** with fixed test identities.
 
 | Area     | Choice |
 |----------|--------|
-| Backend  | Kotlin, Spring Boot 3.4, Java 21, Maven |
+| Backend  | Kotlin 2.4, Spring Boot 4.1, Java 25, Maven |
 | DB       | PostgreSQL 16, Flyway migrations |
-| API docs | springdoc-openapi (Swagger UI) |
+| API docs | springdoc-openapi 3.x (Swagger UI) |
 | Auth     | Spring Security OAuth2 Resource Server (JWT/JWKS) + mock profile |
 | iCal     | ical4j |
-| Frontend | Vite, React, TypeScript |
+| Frontend | Vite, React, TypeScript (theme tokens, OS dark mode, i18n en/de) |
 
 ---
 
@@ -126,7 +126,7 @@ You still need a Postgres reachable at the configured URL (see
   **GHCR**: `ghcr.io/sommer2019/planningtoolvibecoded-backend` (tags `latest` +
   git SHA).
 - **Frontend** → builds with `VITE_MOCK_AUTH=true` and deploys the clickable demo
-  to **GitHub Pages** (custom domain `sommer2019.de`).
+  to **GitHub Pages**: https://sommer2019.github.io/PlanningToolVibeCoded/
 
 ## License
 

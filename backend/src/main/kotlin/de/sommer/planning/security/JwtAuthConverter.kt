@@ -18,7 +18,8 @@ class JwtAuthConverter(
         val roles = extractRoles(jwt)
         val admin = roles.contains(props.adminRole)
         val identity = UserIdentity(
-            subject = jwt.subject,
+            // Spring Security 7 types Jwt.subject as nullable; sub should always exist.
+            subject = jwt.subject ?: jwt.getClaimAsString("sub") ?: "",
             displayName = jwt.getClaimAsString("name")
                 ?: jwt.getClaimAsString("preferred_username"),
             email = jwt.getClaimAsString("email"),
