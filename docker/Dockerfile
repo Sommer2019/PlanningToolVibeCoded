@@ -14,7 +14,7 @@ COPY src ./src
 RUN mvn -B -DskipTests clean package
 
 # ---- Stage 2: runtime ----
-FROM eclipse-temurin:21-jre AS runtime
+FROM eclipse-temurin:25-jre AS runtime
 WORKDIR /app
 
 # curl for the container healthcheck; non-root user for runtime.
