@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/I18nContext";
 import { useProjectCtx } from "./ProjectLayout";
 import { Spinner, ErrorBanner, Empty } from "../components/Feedback";
+import { Modal } from "../components/Modal";
 import { TaskFormDialog } from "../components/TaskFormDialog";
 import { TaskPopover } from "../components/TaskPopover";
 import { statusColor } from "../util/statusColor";
@@ -28,6 +29,7 @@ export function BoardPage() {
   const [editing, setEditing] = useState<Task | null>(null);
   const [popoverTask, setPopoverTask] = useState<{ task: Task; pos: { x: number; y: number } } | null>(null);
   const [creating, setCreating] = useState(false);
+  const [addingStatus, setAddingStatus] = useState(false);
 
   // Any project member may see all tasks of the project (then filter client-side).
   async function load() {
@@ -281,19 +283,9 @@ export function BoardPage() {
                 cursor: "pointer",
                 color: "var(--color-text-muted)"
               }} 
-              onClick={async () => {
-                const name = prompt(t("board.newStatusPrompt") || "Neuer Status:");
-                if (name) {
-                  try {
-                    await api.createStatus(name, project.id, statuses.length);
-                    reloadProject();
-                  } catch (e) {
-                    setError(e instanceof Error ? e.message : String(e));
-                  }
-                }
-              }}
+              onClick={() => setAddingStatus(true)}
             >
-              + {t("board.addStatus") || "Status hinzufügen"}
+              + {t("board.addStatus")}
             </section>
           )}
         </div>
@@ -323,6 +315,72 @@ export function BoardPage() {
           onStatusChange={load}
         />
       )}
+      <StatusDialog 
+        open={addingStatus} 
+        projectId={project.id} 
+        order={statuses.length} 
+        onClose={() => setAddingStatus(false)} 
+        onSaved={reloadProject} 
+      />
     </div>
+  );
+}
+
+function StatusDialog({
+  open,
+  projectId,
+  order,
+  onClose,
+  onSaved,
+}: {
+  open: boolean;
+  projectId: string;
+  order: number;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { t } = useI18n();
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!name.trim()) {
+      setError(t("board.statusDialog.errRequired"));
+      return;
+    }
+    try {
+      await api.createStatus(name.trim(), projectId, order);
+      setName("");
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  return (
+    <Modal open={open} title={t("board.statusDialog.title")} onClose={onClose}>
+      <form onSubmit={submit} className="col">
+        {error && <ErrorBanner message={error} />}
+        <fieldset>
+          <label htmlFor="s-name">{t("board.statusDialog.name")}</label>
+          <input 
+            id="s-name" 
+            autoFocus 
+            required 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+          />
+        </fieldset>
+        <div className="actions">
+          <button type="button" data-variant="secondary" onClick={onClose}>
+            {t("common.cancel")}
+          </button>
+          <button type="submit">{t("common.create")}</button>
+        </div>
+      </form>
+    </Modal>
   );
 }

@@ -56,26 +56,100 @@ export function CalendarPage() {
     return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
   }, [view]);
 
-  function eventsFor(day: Date): DayEvent[] {
-    if (!data) return [];
-    const d0 = startOfDay(day);
-    const events: DayEvent[] = [];
-    for (const t of data.tasks as Task[]) {
-      const start = startOfDay(new Date(t.plannedStart));
-      const end = startOfDay(new Date(t.plannedEnd));
-      if (d0 >= start && d0 <= end) {
-        events.push({ label: t.title, kind: "task", task: t, isStart: sameDay(d0, start), isEnd: sameDay(d0, end) });
+  const layout = useMemo(() => {
+    if (!data) return new Map<string, (DayEvent & { showLabel?: boolean } | null)[]>();
+
+    const allEvents: { id: string; label: string; kind: "task" | "entry"; task?: Task; start: Date; end: Date }[] = [];
+
+    if (data.tasks) {
+      for (const t of data.tasks as Task[]) {
+        allEvents.push({
+          id: `task-${t.id}`,
+          label: t.title,
+          kind: "task",
+          task: t,
+          start: startOfDay(new Date(t.plannedStart)),
+          end: startOfDay(new Date(t.plannedEnd)),
+        });
       }
     }
-    for (const e of data.entries as CalendarEntry[]) {
-      const start = startOfDay(new Date(e.start));
-      const end = startOfDay(new Date(e.end));
-      if (d0 >= start && d0 <= end) {
-        events.push({ label: e.title, kind: "entry", isStart: sameDay(d0, start), isEnd: sameDay(d0, end) });
+    if (data.entries) {
+      for (const e of data.entries as CalendarEntry[]) {
+        allEvents.push({
+          id: `entry-${e.id}`,
+          label: e.title,
+          kind: "entry",
+          start: startOfDay(new Date(e.start)),
+          end: startOfDay(new Date(e.end)),
+        });
       }
     }
-    return events;
-  }
+
+    allEvents.sort((a, b) => {
+      const aStart = a.start.getTime();
+      const bStart = b.start.getTime();
+      if (aStart !== bStart) return aStart - bStart;
+      return (b.end.getTime() - b.start.getTime()) - (a.end.getTime() - a.start.getTime());
+    });
+
+    const daySlots = new Map<string, (DayEvent & { showLabel?: boolean } | null)[]>();
+    for (const d of grid) {
+      daySlots.set(d.toISOString(), []);
+    }
+
+    for (const ev of allEvents) {
+      let first = ev.start;
+      let last = ev.end;
+      if (last < grid[0] || first > grid[grid.length - 1]) continue;
+
+      if (first < grid[0]) first = grid[0];
+      if (last > grid[grid.length - 1]) last = grid[grid.length - 1];
+
+      let rowIndex = 0;
+      while (true) {
+        let isFree = true;
+        let curr = first;
+        while (curr <= last) {
+          const slots = daySlots.get(curr.toISOString());
+          if (slots && slots[rowIndex]) {
+            isFree = false;
+            break;
+          }
+          curr = addDays(curr, 1);
+        }
+        if (isFree) break;
+        rowIndex++;
+      }
+
+      let curr = first;
+      while (curr <= last) {
+        const iso = curr.toISOString();
+        const slots = daySlots.get(iso);
+        if (slots) {
+          while (slots.length <= rowIndex) slots.push(null);
+          
+          const isStart = sameDay(curr, ev.start);
+          const isEnd = sameDay(curr, ev.end);
+          const isGridStart = sameDay(curr, grid[0]);
+          const isMonday = curr.getDay() === 1;
+
+          const showLabel = isStart || isGridStart || isMonday;
+
+          slots[rowIndex] = {
+            label: ev.label,
+            kind: ev.kind,
+            task: ev.task,
+            isStart,
+            isEnd,
+            showLabel
+          };
+        }
+        curr = addDays(curr, 1);
+      }
+    }
+
+    return daySlots;
+  }, [data, grid]);
 
   async function getFeed(projectScoped: boolean) {
     setFeedErr(null);
@@ -116,7 +190,11 @@ export function CalendarPage() {
           </div>
         ))}
         {grid.map((day) => {
-          const events = eventsFor(day);
+          const slots = layout.get(day.toISOString()) || [];
+          const maxSlots = 3;
+          const displaySlots = slots.slice(0, maxSlots);
+          const hasMore = slots.length > maxSlots;
+          const moreCount = slots.filter(s => s !== null).length - displaySlots.filter(s => s !== null).length;
           const otherMonth = day.getMonth() !== view.getMonth();
           return (
             <div
@@ -126,35 +204,40 @@ export function CalendarPage() {
               }`}
             >
               <span className="calendar-daynum">{day.getDate()}</span>
-              {events.slice(0, 3).map((ev, i) => (
-                <span 
-                  className="calendar-event" 
-                  data-kind={ev.kind} 
-                  key={i} 
-                  title={ev.label}
-                  onClick={(e) => {
-                    if (ev.kind === "task" && ev.task) {
-                      e.stopPropagation();
-                      setPopoverTask({ task: ev.task, pos: { x: e.clientX, y: e.clientY } });
-                    }
-                  }}
-                  style={{ 
-                    cursor: ev.kind === "task" ? "pointer" : "default",
-                    marginLeft: ev.isStart ? undefined : '-9px',
-                    marginRight: ev.isEnd ? undefined : '-9px',
-                    paddingLeft: ev.isStart ? undefined : '9px',
-                    paddingRight: ev.isEnd ? undefined : '9px',
-                    borderTopLeftRadius: ev.isStart ? undefined : 0,
-                    borderBottomLeftRadius: ev.isStart ? undefined : 0,
-                    borderTopRightRadius: ev.isEnd ? undefined : 0,
-                    borderBottomRightRadius: ev.isEnd ? undefined : 0,
-                    marginBottom: '1px'
-                  }}
-                >
-                  {ev.label}
-                </span>
-              ))}
-              {events.length > 3 && <small>{t("calendar.more", { n: events.length - 3 })}</small>}
+              {displaySlots.map((ev, i) => {
+                if (!ev) {
+                  return <span key={i} className="calendar-event" style={{ visibility: "hidden" }}>&nbsp;</span>;
+                }
+                return (
+                  <span 
+                    className="calendar-event" 
+                    data-kind={ev.kind} 
+                    key={i} 
+                    title={ev.label}
+                    onClick={(e) => {
+                      if (ev.kind === "task" && ev.task) {
+                        e.stopPropagation();
+                        setPopoverTask({ task: ev.task, pos: { x: e.clientX, y: e.clientY } });
+                      }
+                    }}
+                    style={{ 
+                      cursor: ev.kind === "task" ? "pointer" : "default",
+                      marginLeft: ev.isStart ? undefined : '-9px',
+                      marginRight: ev.isEnd ? undefined : '-9px',
+                      paddingLeft: ev.isStart ? undefined : '9px',
+                      paddingRight: ev.isEnd ? undefined : '9px',
+                      borderTopLeftRadius: ev.isStart ? undefined : 0,
+                      borderBottomLeftRadius: ev.isStart ? undefined : 0,
+                      borderTopRightRadius: ev.isEnd ? undefined : 0,
+                      borderBottomRightRadius: ev.isEnd ? undefined : 0,
+                      marginBottom: '1px'
+                    }}
+                  >
+                    {ev.showLabel ? ev.label : "\u00A0"}
+                  </span>
+                );
+              })}
+              {hasMore && moreCount > 0 && <small>{t("calendar.more", { n: moreCount })}</small>}
             </div>
           );
         })}

@@ -63,6 +63,10 @@ const en: Dict = {
   "board.unlock": "Unlock",
   "board.locked": "Locked",
   "board.confirmDelete": 'Delete task "{title}"?',
+  "board.addStatus": "Add Status",
+  "board.statusDialog.title": "New Status",
+  "board.statusDialog.name": "Name *",
+  "board.statusDialog.errRequired": "Name is required.",
 
   "task.form.titleNew": "New task",
   "task.form.titleEdit": "Edit task",
@@ -178,6 +182,10 @@ const de: Dict = {
   "board.unlock": "Entsperren",
   "board.locked": "Gesperrt",
   "board.confirmDelete": 'Aufgabe „{title}" löschen?',
+  "board.addStatus": "Status hinzufügen",
+  "board.statusDialog.title": "Neuer Status",
+  "board.statusDialog.name": "Name *",
+  "board.statusDialog.errRequired": "Name ist erforderlich.",
 
   "task.form.titleNew": "Neue Aufgabe",
   "task.form.titleEdit": "Aufgabe bearbeiten",
