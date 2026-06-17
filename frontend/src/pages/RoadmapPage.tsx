@@ -10,7 +10,7 @@ import { TaskPopover } from "../components/TaskPopover";
 import { TaskFormDialog } from "../components/TaskFormDialog";
 import type { Task } from "../api";
 
-const MONTHS_VISIBLE = 3;
+
 
 function startOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -26,6 +26,7 @@ export function RoadmapPage() {
   const [view, setView] = useState(() => startOfMonth(new Date()));
   const [popoverTask, setPopoverTask] = useState<{ task: Task; pos: { x: number; y: number } } | null>(null);
   const [editing, setEditing] = useState<Task | null>(null);
+  const [monthsVisible, setMonthsVisible] = useState(3);
   const locale = getLocale();
 
   const statusName = useMemo(
@@ -34,10 +35,10 @@ export function RoadmapPage() {
   );
 
   const windowStart = startOfMonth(view);
-  const windowEnd = addMonths(windowStart, MONTHS_VISIBLE);
+  const windowEnd = addMonths(windowStart, monthsVisible);
   const totalMs = windowEnd.getTime() - windowStart.getTime();
 
-  const months = Array.from({ length: MONTHS_VISIBLE }, (_, i) => addMonths(windowStart, i));
+  const months = Array.from({ length: monthsVisible }, (_, i) => addMonths(windowStart, i));
 
   if (loading) return <Spinner />;
   if (error) return <ErrorBanner message={error} />;
@@ -52,7 +53,7 @@ export function RoadmapPage() {
         </button>
         <strong>
           {windowStart.toLocaleDateString(locale, { month: "long", year: "numeric" })} –{" "}
-          {addMonths(windowStart, MONTHS_VISIBLE - 1).toLocaleDateString(locale, {
+          {addMonths(windowStart, monthsVisible - 1).toLocaleDateString(locale, {
             month: "long",
             year: "numeric",
           })}
@@ -61,7 +62,30 @@ export function RoadmapPage() {
           {t("common.next")}
         </button>
         <span className="spacer" />
-        <button data-variant="ghost" onClick={() => setView(startOfMonth(new Date()))}>
+        <div className="row" style={{ alignItems: "center", gap: "2px" }}>
+          <button 
+            data-variant="ghost" 
+            title="Zoom In" 
+            onClick={() => setMonthsVisible((m) => Math.max(1, m - 1))} 
+            disabled={monthsVisible <= 1}
+            style={{ padding: "0 8px" }}
+          >
+            🔍+
+          </button>
+          <span className="muted" style={{ fontSize: "12px", minWidth: "24px", textAlign: "center" }}>
+            {monthsVisible}M
+          </span>
+          <button 
+            data-variant="ghost" 
+            title="Zoom Out" 
+            onClick={() => setMonthsVisible((m) => Math.min(12, m + 1))} 
+            disabled={monthsVisible >= 12}
+            style={{ padding: "0 8px" }}
+          >
+            🔍-
+          </button>
+        </div>
+        <button data-variant="ghost" onClick={() => setView(startOfMonth(new Date()))} style={{ marginLeft: "var(--space-2)" }}>
           {t("common.today")}
         </button>
       </div>
