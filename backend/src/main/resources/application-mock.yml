@@ -1,0 +1,5 @@
+# Activated with: --spring.profiles.active=mock  (or SPRING_PROFILES_ACTIVE=mock)
+# Forces mock auth on. NEVER use this profile in production.
+app:
+  auth:
+    mock: true

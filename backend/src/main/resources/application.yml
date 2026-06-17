@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: planning-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/planning}
+    username: ${SPRING_DATASOURCE_USERNAME:planning}
+    password: ${SPRING_DATASOURCE_PASSWORD:planning}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  auth:
+    mock: ${APP_AUTH_MOCK:false}
+    issuer-uri: ${APP_AUTH_ISSUER_URI:}
+    audience: ${APP_AUTH_AUDIENCE:}
+    roles-claim: ${APP_AUTH_ROLES_CLAIM:groups}
+    admin-role: ${APP_AUTH_ADMIN_ROLE:planning-admin}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+# In prod, Spring needs the issuer to configure the resource server. It is only
+# wired when mock is OFF and an issuer is present (see SecurityConfig).
