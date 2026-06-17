@@ -60,6 +60,6 @@ services:
 
 networks:
   cpp-edge:
-      external: true
+    external: true
 volumes:
   planning-pgdata:
