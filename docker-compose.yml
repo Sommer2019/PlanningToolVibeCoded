@@ -34,7 +34,7 @@ services:
         condition: service_healthy
     environment:
       # --- Real Authentik auth (mock OFF) ---
-      APP_AUTH_MOCK: "false"
+      APP_AUTH_MOCK: "true"
       APP_AUTH_ISSUER_URI: "https://hackathon.amogusdrip.de/auth/application/o/vibecode/"
       APP_AUTH_ROLES_CLAIM: "groups"
       APP_AUTH_ADMIN_ROLE: "planning-admin"
