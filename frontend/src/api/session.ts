@@ -18,3 +18,11 @@ export function setActiveUser(user: string): void {
 export function getBearerToken(): string | null {
   return localStorage.getItem("planning_token");
 }
+
+export function setBearerToken(token: string | null): void {
+  if (token) {
+    localStorage.setItem("planning_token", token);
+  } else {
+    localStorage.removeItem("planning_token");
+  }
+}
