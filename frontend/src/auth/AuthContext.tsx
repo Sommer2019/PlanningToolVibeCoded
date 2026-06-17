@@ -21,7 +21,10 @@ const AuthCtx = createContext<AuthState | undefined>(undefined);
 const oidcConfig = {
   authority: import.meta.env.VITE_OIDC_AUTHORITY || "https://hackathon.amogusdrip.de/auth/application/o/vibecode/",
   client_id: import.meta.env.VITE_OIDC_CLIENT_ID || "oIgnzizlgBgGKtC1SJBvM6HqEtasIMXxkTsIN8O9",
-  redirect_uri: window.location.origin,
+  // Land back on the app's base path (e.g. https://host/planning/), not the host
+  // root, so the SPA is actually mounted to handle the ?code= callback.
+  redirect_uri: window.location.origin + import.meta.env.BASE_URL,
+  post_logout_redirect_uri: window.location.origin + import.meta.env.BASE_URL,
   response_type: "code",
   scope: "openid profile email",
   userStore: new WebStorageStateStore({ store: window.localStorage }),

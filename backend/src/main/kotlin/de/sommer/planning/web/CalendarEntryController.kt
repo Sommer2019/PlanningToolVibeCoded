@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/calendar-entries")
+@RequestMapping("/api/planning/calendar-entries")
 @Tag(name = "Calendar entries")
 class CalendarEntryController(
     private val calendar: CalendarService,

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/projects")
+@RequestMapping("/api/planning/projects")
 @Tag(name = "Projects")
 class ProjectController(
     private val projects: ProjectService,

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/calendar")
+@RequestMapping("/api/planning/calendar")
 @Tag(name = "Calendar feed")
 class CalendarFeedController(
     private val feeds: CalendarFeedService,
@@ -56,5 +56,5 @@ private fun CalendarFeedToken.toResponse() = FeedTokenResponse(
     token = token,
     projectId = projectId,
     userRef = userRef,
-    feedPath = "/api/calendar/$token.ics",
+    feedPath = "/api/planning/calendar/$token.ics",
 )

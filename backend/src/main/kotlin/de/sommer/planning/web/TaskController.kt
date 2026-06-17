@@ -26,11 +26,11 @@ import java.util.UUID
 class TaskController(
     private val tasks: TaskService,
 ) {
-    @GetMapping("/api/projects/{projectId}/tasks")
+    @GetMapping("/api/planning/projects/{projectId}/tasks")
     fun listByProject(@PathVariable projectId: UUID): List<TaskResponse> =
         tasks.listByProject(projectId).map { it.toResponse() }
 
-    @PostMapping("/api/projects/{projectId}/tasks")
+    @PostMapping("/api/planning/projects/{projectId}/tasks")
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
         @PathVariable projectId: UUID,
@@ -38,33 +38,33 @@ class TaskController(
     ): TaskResponse = tasks.create(projectId, req).toResponse()
 
     /** Per-user Kanban board. scope=me (default) or scope=all (admin/owner). */
-    @GetMapping("/api/projects/{projectId}/board")
+    @GetMapping("/api/planning/projects/{projectId}/board")
     fun board(
         @PathVariable projectId: UUID,
         @RequestParam(defaultValue = "me") scope: String,
     ): List<TaskResponse> =
         tasks.board(projectId, scopeAll = scope.equals("all", ignoreCase = true)).map { it.toResponse() }
 
-    @GetMapping("/api/tasks/{id}")
+    @GetMapping("/api/planning/tasks/{id}")
     fun get(@PathVariable id: UUID): TaskResponse = tasks.get(id).toResponse()
 
-    @PutMapping("/api/tasks/{id}")
+    @PutMapping("/api/planning/tasks/{id}")
     fun update(@PathVariable id: UUID, @Valid @RequestBody req: UpdateTaskRequest): TaskResponse =
         tasks.update(id, req).toResponse()
 
-    @PatchMapping("/api/tasks/{id}/status")
+    @PatchMapping("/api/planning/tasks/{id}/status")
     fun updateStatus(
         @PathVariable id: UUID,
         @Valid @RequestBody req: UpdateTaskStatusRequest,
     ): TaskResponse = tasks.updateStatus(id, req.statusId).toResponse()
 
-    @PostMapping("/api/tasks/{id}/lock")
+    @PostMapping("/api/planning/tasks/{id}/lock")
     fun lock(@PathVariable id: UUID): TaskResponse = tasks.setLocked(id, true).toResponse()
 
-    @PostMapping("/api/tasks/{id}/unlock")
+    @PostMapping("/api/planning/tasks/{id}/unlock")
     fun unlock(@PathVariable id: UUID): TaskResponse = tasks.setLocked(id, false).toResponse()
 
-    @DeleteMapping("/api/tasks/{id}")
+    @DeleteMapping("/api/planning/tasks/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(@PathVariable id: UUID) = tasks.delete(id)
 }

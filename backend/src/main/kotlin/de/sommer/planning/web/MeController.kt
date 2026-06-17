@@ -24,7 +24,7 @@ data class MockUserResponse(
 )
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/planning")
 @Tag(name = "Identity")
 class MeController(
     private val currentUser: CurrentUser,

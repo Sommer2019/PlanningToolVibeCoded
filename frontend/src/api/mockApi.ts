@@ -415,7 +415,7 @@ export const mockApi: Api = {
       token,
       projectId: projectId ?? null,
       userRef: u,
-      feedPath: `/api/calendar/${token}.ics`,
+      feedPath: `/api/planning/calendar/${token}.ics`,
     };
     feedTokens.push(f);
     return delay(f);

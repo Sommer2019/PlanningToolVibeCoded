@@ -48,8 +48,8 @@ class SecurityConfig(
                 // OpenAPI spec + Swagger UI.
                 it.requestMatchers("/openapi.json", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // The iCal feed authenticates via the token in the URL, not a header.
-                it.requestMatchers(HttpMethod.GET, "/api/calendar/*.ics").permitAll()
-                it.requestMatchers("/api/**").authenticated()
+                it.requestMatchers(HttpMethod.GET, "/api/planning/calendar/*.ics").permitAll()
+                it.requestMatchers("/api/planning/**").authenticated()
                 it.anyRequest().permitAll()
             }
 

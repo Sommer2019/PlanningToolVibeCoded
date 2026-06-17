@@ -10,7 +10,7 @@ class CalendarFeedTest : AbstractIntegrationTest() {
 
     @Test
     fun `project iCal feed exposes tasks as VEVENTs`() {
-        val pid = field(request("POST", "/api/projects", """{"name":"Calendar"}""", "TestUser1"), "id")
+        val pid = field(request("POST", "/api/planning/projects", """{"name":"Calendar"}""", "TestUser1"), "id")
 
         val taskBody = """
             {
@@ -22,9 +22,9 @@ class CalendarFeedTest : AbstractIntegrationTest() {
               "plannedEnd": "2026-07-01T10:00:00Z"
             }
         """.trimIndent()
-        assertEquals(201, request("POST", "/api/projects/$pid/tasks", taskBody, "TestUser1").statusCode())
+        assertEquals(201, request("POST", "/api/planning/projects/$pid/tasks", taskBody, "TestUser1").statusCode())
 
-        val tokenRes = request("POST", "/api/calendar/feed-tokens", """{"projectId":"$pid"}""", "TestUser1")
+        val tokenRes = request("POST", "/api/planning/calendar/feed-tokens", """{"projectId":"$pid"}""", "TestUser1")
         assertEquals(201, tokenRes.statusCode())
         val feedPath = field(tokenRes, "feedPath")
 
