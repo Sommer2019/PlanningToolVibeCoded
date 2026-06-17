@@ -27,7 +27,7 @@ services:
   planning-backend:
     build:
       context: backend
-      dockerfile: docker/Dockerfile
+      dockerfile: ../docker/Dockerfile
     image: ghcr.io/sommer2019/planningtoolvibecoded-backend:latest
     depends_on:
       planning-postgres:
