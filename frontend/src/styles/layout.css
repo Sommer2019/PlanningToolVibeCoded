@@ -127,7 +127,7 @@
   gap: var(--space-4);
   overflow-x: auto;
   padding-bottom: var(--space-3);
-  align-items: flex-start;
+  align-items: stretch;
 }
 .board-column {
   flex: 0 0 290px;
@@ -258,7 +258,11 @@
   background: var(--color-primary);
   color: #fff;
   border-radius: 50%;
-  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
 }
 .calendar-event {
   display: block;

@@ -44,8 +44,8 @@ export interface Task {
   id: string;
   projectId: string;
   title: string;
-  description: string;
-  assignee: string;
+  description: string | null;
+  assignee: string | null;
   statusId: string;
   plannedStart: string;
   plannedEnd: string;
@@ -83,8 +83,8 @@ export interface CreateProjectInput {
 
 export interface TaskInput {
   title: string;
-  description: string;
-  assignee: string;
+  description?: string | null;
+  assignee?: string | null;
   statusId: string;
   plannedStart: string;
   plannedEnd: string;

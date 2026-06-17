@@ -8,6 +8,7 @@ import de.sommer.planning.repo.ProjectRepository
 import de.sommer.planning.security.CurrentUser
 import de.sommer.planning.web.ForbiddenException
 import de.sommer.planning.web.NotFoundException
+import de.sommer.planning.web.BadRequestException
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -38,6 +39,13 @@ class AccessService(
         if (id.admin) return project
         if (isMember(projectId, id.userRef)) return project
         throw ForbiddenException("Not a member of this project")
+    }
+
+    /** Verifies that a specific userRef is a member of the project. Useful for validating assignees. */
+    fun requireIsMember(projectId: UUID, userRef: String) {
+        if (!isMember(projectId, userRef)) {
+            throw BadRequestException("Assignee is not a member of this project")
+        }
     }
 
     /** Admin or project owner (creator). */

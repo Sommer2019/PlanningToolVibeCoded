@@ -80,8 +80,8 @@ data class TaskResponse(
     val id: UUID,
     val projectId: UUID,
     val title: String,
-    val description: String,
-    val assignee: String,
+    val description: String?,
+    val assignee: String?,
     val statusId: UUID,
     val plannedStart: Instant,
     val plannedEnd: Instant,
@@ -94,8 +94,8 @@ data class TaskResponse(
 
 data class CreateTaskRequest(
     @field:NotBlank val title: String,
-    @field:NotBlank val description: String,
-    @field:NotBlank val assignee: String,
+    val description: String? = null,
+    val assignee: String? = null,
     @field:NotNull val statusId: UUID,
     @field:NotNull val plannedStart: Instant,
     @field:NotNull val plannedEnd: Instant,
@@ -105,8 +105,8 @@ data class CreateTaskRequest(
 
 data class UpdateTaskRequest(
     @field:NotBlank val title: String,
-    @field:NotBlank val description: String,
-    @field:NotBlank val assignee: String,
+    val description: String? = null,
+    val assignee: String? = null,
     @field:NotNull val statusId: UUID,
     @field:NotNull val plannedStart: Instant,
     @field:NotNull val plannedEnd: Instant,

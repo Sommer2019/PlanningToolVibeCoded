@@ -7,11 +7,12 @@ import { Spinner, ErrorBanner, Empty } from "../components/Feedback";
 import { TaskFormDialog } from "../components/TaskFormDialog";
 import { statusColor } from "../util/statusColor";
 import { formatDate } from "../util/format";
+import { userColor } from "../util/userColor";
 
 export function BoardPage() {
   const { project, statuses, members, isOwnerOrAdmin } = useProjectCtx();
   const { me } = useAuth();
-  const [scope, setScope] = useState<BoardScope>("me");
+  const [scope, setScope] = useState<BoardScope>("all");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,13 +42,32 @@ export function BoardPage() {
     return !t.locked || Boolean(me?.admin) || t.createdBy === me?.subject;
   }
 
-  async function moveTo(taskId: string, statusId: string) {
+  async function moveTo(taskId: string, statusId: string, statusName: string) {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || task.statusId === statusId) return;
+    
+    let newAssignee = task.assignee;
+    if (statusName.toLowerCase().includes("progress") && me?.subject) {
+      newAssignee = me.subject;
+    }
+
     const prev = tasks;
-    setTasks((ts) => ts.map((t) => (t.id === taskId ? { ...t, statusId } : t)));
+    setTasks((ts) => ts.map((t) => (t.id === taskId ? { ...t, statusId, assignee: newAssignee } : t)));
     try {
-      await api.updateTaskStatus(taskId, statusId);
+      if (newAssignee !== task.assignee) {
+        await api.updateTask(taskId, {
+          title: task.title,
+          description: task.description,
+          assignee: newAssignee,
+          statusId,
+          plannedStart: task.plannedStart,
+          plannedEnd: task.plannedEnd,
+          actualStart: task.actualStart,
+          actualEnd: task.actualEnd,
+        });
+      } else {
+        await api.updateTaskStatus(taskId, statusId);
+      }
     } catch (e) {
       setTasks(prev); // revert
       setError(e instanceof Error ? e.message : String(e));
@@ -77,16 +97,23 @@ export function BoardPage() {
     <div className="col">
       <div className="toolbar">
         <strong>{scope === "me" ? "My tasks" : "All tasks"}</strong>
-        {isOwnerOrAdmin && (
-          <select
-            style={{ width: "auto" }}
-            value={scope}
-            onChange={(e) => setScope(e.target.value as BoardScope)}
-          >
-            <option value="me">My tasks</option>
-            <option value="all">All tasks (owner/admin)</option>
-          </select>
-        )}
+        <select
+          style={{ width: "auto" }}
+          value={scope}
+          onChange={(e) => setScope(e.target.value as BoardScope)}
+        >
+          <option value="all">All tasks</option>
+          <option value="me">My tasks</option>
+        </select>
+        
+        <div className="row wrap" style={{ marginLeft: "var(--space-4)", gap: "var(--space-2)" }}>
+          {members.filter(m => m.status === "MEMBER").map(m => (
+            <span key={m.userRef} className="badge" style={{ backgroundColor: userColor(m.userRef), color: "var(--color-text)" }}>
+              {m.userRef}
+            </span>
+          ))}
+        </div>
+
         <span className="spacer" />
         <button onClick={() => setCreating(true)}>+ New task</button>
       </div>
@@ -113,7 +140,7 @@ export function BoardPage() {
                   e.preventDefault();
                   setDragOver(null);
                   const id = e.dataTransfer.getData("text/plain") || dragId;
-                  if (id) void moveTo(id, s.id);
+                  if (id) void moveTo(id, s.id, s.name);
                 }}
               >
                 <header>
@@ -127,6 +154,7 @@ export function BoardPage() {
                     key={t.id}
                     className={`card${dragId === t.id ? " dragging" : ""}`}
                     draggable={canEdit(t)}
+                    style={{ backgroundColor: userColor(t.assignee) }}
                     onDragStart={(e) => {
                       e.dataTransfer.setData("text/plain", t.id);
                       setDragId(t.id);

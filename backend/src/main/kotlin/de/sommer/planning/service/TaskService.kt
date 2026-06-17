@@ -30,11 +30,8 @@ class TaskService(
      * project. Admins/owners may request the full project board via [scopeAll].
      */
     fun board(projectId: UUID, scopeAll: Boolean): List<Task> {
-        val project = access.requireMember(projectId)
+        access.requireMember(projectId)
         if (scopeAll) {
-            if (!access.isProjectOwnerOrAdmin(project)) {
-                throw ForbiddenException("Only admin/owner can view the full board")
-            }
             return tasks.findByProjectId(projectId)
         }
         val me = currentUser.userRef()
@@ -50,6 +47,7 @@ class TaskService(
     @Transactional
     fun create(projectId: UUID, req: CreateTaskRequest): Task {
         access.requireMember(projectId)
+        if (req.assignee != null) access.requireIsMember(projectId, req.assignee)
         validateDates(req.plannedStart, req.plannedEnd, req.actualStart, req.actualEnd)
         validateStatus(req.statusId, projectId)
         val task = Task(
@@ -71,6 +69,7 @@ class TaskService(
     fun update(taskId: UUID, req: UpdateTaskRequest): Task {
         val task = load(taskId)
         access.requireCanEditTask(task)
+        if (req.assignee != null) access.requireIsMember(task.projectId, req.assignee)
         validateDates(req.plannedStart, req.plannedEnd, req.actualStart, req.actualEnd)
         validateStatus(req.statusId, task.projectId)
         task.title = req.title
@@ -89,6 +88,15 @@ class TaskService(
         val task = load(taskId)
         access.requireCanEditTask(task)
         validateStatus(statusId, task.projectId)
+        
+        val status = statuses.findById(statusId).get()
+        if (status.order == 1 && task.actualStart == null) {
+            task.actualStart = java.time.Instant.now()
+        } else if (status.order >= 2 && task.actualEnd == null) {
+            if (task.actualStart == null) task.actualStart = java.time.Instant.now()
+            task.actualEnd = java.time.Instant.now()
+        }
+        
         task.statusId = statusId
         return tasks.save(task)
     }
@@ -96,7 +104,10 @@ class TaskService(
     @Transactional
     fun setLocked(taskId: UUID, locked: Boolean): Task {
         val task = load(taskId)
-        access.requireProjectAdmin(task.projectId)
+        val id = currentUser.require()
+        if (!id.admin && task.createdBy != id.userRef) {
+            access.requireProjectAdmin(task.projectId)
+        }
         task.locked = locked
         return tasks.save(task)
     }
