@@ -6,6 +6,9 @@ import { useAsync } from "../hooks/useAsync";
 import { Spinner, ErrorBanner, Empty } from "../components/Feedback";
 import { statusColor } from "../util/statusColor";
 import { formatDate, getLocale } from "../util/format";
+import { TaskPopover } from "../components/TaskPopover";
+import { TaskFormDialog } from "../components/TaskFormDialog";
+import type { Task } from "../api";
 
 const MONTHS_VISIBLE = 3;
 
@@ -17,10 +20,12 @@ function addMonths(d: Date, n: number): Date {
 }
 
 export function RoadmapPage() {
-  const { project, statuses } = useProjectCtx();
+  const { project, statuses, members } = useProjectCtx();
   const { t } = useI18n();
-  const { data, loading, error } = useAsync(() => api.listProjectTasks(project.id), [project.id]);
+  const { data, loading, error, reload } = useAsync(() => api.listProjectTasks(project.id), [project.id]);
   const [view, setView] = useState(() => startOfMonth(new Date()));
+  const [popoverTask, setPopoverTask] = useState<{ task: Task; pos: { x: number; y: number } } | null>(null);
+  const [editing, setEditing] = useState<Task | null>(null);
   const locale = getLocale();
 
   const statusName = useMemo(
@@ -94,10 +99,12 @@ export function RoadmapPage() {
                   {visible ? (
                     <div
                       className="timeline-bar"
+                      onClick={(e) => setPopoverTask({ task, pos: { x: e.clientX, y: e.clientY } })}
                       style={{
                         left: `${left}%`,
                         width: `${width}%`,
                         background: statusColor(statusName.get(task.statusId) ?? ""),
+                        cursor: "pointer"
                       }}
                       title={`${task.title}: ${formatDate(task.plannedStart)} – ${formatDate(task.plannedEnd)}`}
                     >
@@ -114,6 +121,28 @@ export function RoadmapPage() {
           })}
         </div>
       )}
+
+      {popoverTask && (
+        <TaskPopover
+          task={popoverTask.task}
+          pos={popoverTask.pos}
+          onClose={() => setPopoverTask(null)}
+          onEdit={() => {
+            setPopoverTask(null);
+            setEditing(popoverTask.task);
+          }}
+        />
+      )}
+
+      <TaskFormDialog
+        open={editing !== null}
+        projectId={project.id}
+        statuses={statuses}
+        members={members}
+        task={editing}
+        onClose={() => setEditing(null)}
+        onSaved={reload}
+      />
     </div>
   );
 }

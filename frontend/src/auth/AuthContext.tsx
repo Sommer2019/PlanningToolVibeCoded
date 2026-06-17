@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [mockUsers, setMockUsers] = useState<MockUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeUser, setActive] = useState(getActiveUser());
+  const [activeUser] = useState(getActiveUser());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,10 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const switchUser = useCallback(
     (subject: string) => {
       setActiveUser(subject);
-      setActive(subject);
-      void load();
+      window.location.reload();
     },
-    [load],
+    [],
   );
 
   // Show the switcher whenever identities are available (mock backend or demo).

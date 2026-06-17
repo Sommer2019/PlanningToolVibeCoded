@@ -6,6 +6,7 @@ import { useI18n } from "../i18n/I18nContext";
 import { useAsync } from "../hooks/useAsync";
 import { Spinner, ErrorBanner, Empty } from "../components/Feedback";
 import { TaskFormDialog } from "../components/TaskFormDialog";
+import { TaskPopover } from "../components/TaskPopover";
 import { formatDate } from "../util/format";
 
 type SortKey = "title" | "assignee" | "status" | "plannedStart" | "plannedEnd";
@@ -23,7 +24,9 @@ export function TasklistPage() {
   const [to, setTo] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("plannedStart");
   const [asc, setAsc] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
+  const [popoverTask, setPopoverTask] = useState<{ task: Task; pos: { x: number; y: number } } | null>(null);
 
   const statusName = useMemo(() => new Map(statuses.map((s) => [s.id, s.name])), [statuses]);
 
@@ -108,7 +111,7 @@ export function TasklistPage() {
           </thead>
           <tbody>
             {rows.map((task) => (
-              <tr key={task.id}>
+              <tr key={task.id} onClick={(e) => setPopoverTask({ task, pos: { x: e.clientX, y: e.clientY } })} style={{ cursor: "pointer" }}>
                 <td>
                   {task.locked && <span title={t("board.locked")}>🔒 </span>}
                   {task.title}
@@ -118,7 +121,7 @@ export function TasklistPage() {
                 <td>{formatDate(task.plannedStart)}</td>
                 <td>{formatDate(task.plannedEnd)}</td>
                 <td>
-                  <button data-variant="ghost" onClick={() => setEditing(task)}>
+                  <button data-variant="ghost" onClick={(e) => { e.stopPropagation(); setEditing(task); setPopoverTask(null); }}>
                     {t("common.edit")}
                   </button>
                 </td>
@@ -129,14 +132,28 @@ export function TasklistPage() {
       )}
 
       <TaskFormDialog
-        open={editing !== null}
+        open={creating || editing !== null}
         projectId={project.id}
         statuses={statuses}
         members={members}
         task={editing}
-        onClose={() => setEditing(null)}
+        onClose={() => {
+          setCreating(false);
+          setEditing(null);
+        }}
         onSaved={reload}
       />
+      {popoverTask && (
+        <TaskPopover
+          task={popoverTask.task}
+          pos={popoverTask.pos}
+          onClose={() => setPopoverTask(null)}
+          onEdit={() => {
+            setPopoverTask(null);
+            setEditing(popoverTask.task);
+          }}
+        />
+      )}
     </div>
   );
 }

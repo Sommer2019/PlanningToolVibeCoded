@@ -7,11 +7,14 @@ import { useProjectCtx } from "./ProjectLayout";
 import { useAsync } from "../hooks/useAsync";
 import { Spinner, ErrorBanner } from "../components/Feedback";
 import { Modal } from "../components/Modal";
+import { TaskPopover } from "../components/TaskPopover";
+import { TaskFormDialog } from "../components/TaskFormDialog";
 import { addDays, fromLocalInput, getLocale, sameDay, startOfDay, toLocalInput } from "../util/format";
 
 interface DayEvent {
   label: string;
   kind: "task" | "entry";
+  task?: Task;
 }
 
 function startOfMonth(d: Date): Date {
@@ -26,7 +29,7 @@ function weekdayNames(locale: string): string[] {
 }
 
 export function CalendarPage() {
-  const { project } = useProjectCtx();
+  const { project, statuses, members } = useProjectCtx();
   const { t } = useI18n();
   const locale = getLocale();
   const WEEKDAYS = weekdayNames(locale);
@@ -42,6 +45,8 @@ export function CalendarPage() {
   const [adding, setAdding] = useState(false);
   const [feedUrl, setFeedUrl] = useState<string | null>(null);
   const [feedErr, setFeedErr] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [popoverTask, setPopoverTask] = useState<{ task: Task; pos: { x: number; y: number } } | null>(null);
 
   const grid = useMemo(() => {
     const first = startOfMonth(view);
@@ -55,7 +60,7 @@ export function CalendarPage() {
     const events: DayEvent[] = [];
     for (const t of data.tasks as Task[]) {
       if (d0 >= startOfDay(new Date(t.plannedStart)) && d0 <= startOfDay(new Date(t.plannedEnd))) {
-        events.push({ label: t.title, kind: "task" });
+        events.push({ label: t.title, kind: "task", task: t });
       }
     }
     for (const e of data.entries as CalendarEntry[]) {
@@ -116,7 +121,19 @@ export function CalendarPage() {
             >
               <span className="calendar-daynum">{day.getDate()}</span>
               {events.slice(0, 3).map((ev, i) => (
-                <span className="calendar-event" data-kind={ev.kind} key={i} title={ev.label}>
+                <span 
+                  className="calendar-event" 
+                  data-kind={ev.kind} 
+                  key={i} 
+                  title={ev.label}
+                  onClick={(e) => {
+                    if (ev.kind === "task" && ev.task) {
+                      e.stopPropagation();
+                      setPopoverTask({ task: ev.task, pos: { x: e.clientX, y: e.clientY } });
+                    }
+                  }}
+                  style={{ cursor: ev.kind === "task" ? "pointer" : "default" }}
+                >
                   {ev.label}
                 </span>
               ))}
@@ -155,6 +172,28 @@ export function CalendarPage() {
         open={adding}
         projectId={project.id}
         onClose={() => setAdding(false)}
+        onSaved={reload}
+      />
+
+      {popoverTask && (
+        <TaskPopover
+          task={popoverTask.task}
+          pos={popoverTask.pos}
+          onClose={() => setPopoverTask(null)}
+          onEdit={() => {
+            setPopoverTask(null);
+            setEditingTask(popoverTask.task);
+          }}
+        />
+      )}
+
+      <TaskFormDialog
+        open={editingTask !== null}
+        projectId={project.id}
+        statuses={statuses}
+        members={members}
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
         onSaved={reload}
       />
     </div>

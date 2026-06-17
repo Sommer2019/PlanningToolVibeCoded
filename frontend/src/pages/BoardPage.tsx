@@ -6,6 +6,7 @@ import { useI18n } from "../i18n/I18nContext";
 import { useProjectCtx } from "./ProjectLayout";
 import { Spinner, ErrorBanner, Empty } from "../components/Feedback";
 import { TaskFormDialog } from "../components/TaskFormDialog";
+import { TaskPopover } from "../components/TaskPopover";
 import { statusColor } from "../util/statusColor";
 import { formatDate } from "../util/format";
 import { userColor } from "../util/userColor";
@@ -25,6 +26,7 @@ export function BoardPage() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [editing, setEditing] = useState<Task | null>(null);
+  const [popoverTask, setPopoverTask] = useState<{ task: Task; pos: { x: number; y: number } } | null>(null);
   const [creating, setCreating] = useState(false);
 
   // Any project member may see all tasks of the project (then filter client-side).
@@ -230,6 +232,7 @@ export function BoardPage() {
                       setDragId(task.id);
                     }}
                     onDragEnd={() => setDragId(null)}
+                    onClick={(e) => setPopoverTask({ task, pos: { x: e.clientX, y: e.clientY } })}
                   >
                     <h3>
                       {task.locked && <span title={t("board.locked")}>🔒 </span>}
@@ -242,7 +245,11 @@ export function BoardPage() {
                       <button
                         data-variant="ghost"
                         disabled={!canEdit(task)}
-                        onClick={() => setEditing(task)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditing(task);
+                          setPopoverTask(null);
+                        }}
                       >
                         {t("common.edit")}
                       </button>
@@ -277,6 +284,17 @@ export function BoardPage() {
         }}
         onSaved={load}
       />
+      {popoverTask && (
+        <TaskPopover
+          task={popoverTask.task}
+          pos={popoverTask.pos}
+          onClose={() => setPopoverTask(null)}
+          onEdit={() => {
+            setPopoverTask(null);
+            setEditing(popoverTask.task);
+          }}
+        />
+      )}
     </div>
   );
 }
