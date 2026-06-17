@@ -1,0 +1,118 @@
+# Architecture Decisions & Open Points
+
+This document records the pragmatic decisions taken while building the
+Planning & Tracking module, plus the still-open points. It is the single
+source of truth for "why is it like this".
+
+## Context
+
+This module is **one of several** in a larger system. It deliberately does
+**not** manage users or roles. Identity and roles come from an external
+**Authentik** server via OIDC/JWT. This module only *reads* the token.
+
+---
+
+## Decisions
+
+### D1 — Tech stack & versions
+- **Backend:** Kotlin + Spring Boot 3.4.x, built with Maven, Java 21 (LTS).
+- **DB:** PostgreSQL 16.
+- **Frontend:** Vite + React + TypeScript, buildable as a static SPA.
+- **API docs:** springdoc-openapi (OpenAPI 3 + Swagger UI at `/swagger-ui.html`).
+- **Migrations:** Flyway (SQL migrations, default statuses seeded).
+- **iCal:** ical4j for the read-only calendar feed.
+
+Rationale: all mainstream, well-supported choices that match the spec.
+
+### D2 — Role / claim mapping (was open point #10.1)
+The Authentik claim used for roles was **not yet known** at build time, so it is
+made **fully configurable**:
+
+```
+app.auth.roles-claim   = groups        # JWT claim that holds the role/group list
+app.auth.admin-role    = planning-admin # value inside that claim that grants ADMIN
+```
+
+- The roles claim is expected to be a JSON array of strings (Authentik `groups`
+  is exactly that). A single string value is also accepted.
+- Any user whose roles-claim contains `app.auth.admin-role` becomes `ROLE_ADMIN`.
+- Everyone authenticated is at least `ROLE_USER`.
+- Change these two properties (env: `APP_AUTH_ROLES_CLAIM`, `APP_AUTH_ADMIN_ROLE`)
+  once the real Authentik config is known — no code change needed.
+
+### D3 — Mock / test auth mode (spec §2)
+- Enabled with Spring profile `mock` **or** env `APP_AUTH_MOCK=true`.
+- When active, **JWT verification is bypassed**. A request gets its identity from
+  the `X-Mock-User` header (or `?mockUser=` query param). Default = `TestAdmin`.
+- Fixed identities: `TestAdmin` (ADMIN), `TestUser1`, `TestUser2`, `TestUser3` (USER).
+- **Never** enabled by default; production runs without the `mock` profile.
+  A loud WARN is logged on startup when mock mode is on.
+
+### D4 — "Per-user" Kanban board filter (was open point #10.2)
+A user's board shows tasks where **`assignee == current user`**, scoped to the
+selected project. Documented in UI as "My tasks". Admins can additionally switch
+to an "all tasks" board view per project.
+
+### D5 — Memberships & join requests (was open point #10.3 → "both")
+Both flows are implemented:
+- **Direct add:** a project admin/owner adds a user (`status = MEMBER`).
+- **Join request:** a user requests to join (`status = REQUESTED`); an
+  admin/owner approves (→ `MEMBER`) or rejects (removes the row).
+Kept intentionally simple: one `ProjectMembership` row, status enum
+`MEMBER | REQUESTED`, optional project-scoped role.
+
+### D6 — Configurable statuses (spec §3)
+Statuses are **data, not a hard enum**. Seeded global defaults: `Todo`,
+`In Progress`, `Done` (`projectId = null`, `isDefault = true`). Admins (and
+project owners) can create project-scoped statuses. Tasks reference a status id.
+A `Done`-style completion is not special-cased in the backend; ordering is via
+the `order` column.
+
+### D7 — Locking (spec §4.2)
+`Task.locked = true` means non-editable **except** by an ADMIN or the task's
+creator. Enforced server-side; surfaced in the UI as a lock indicator.
+
+### D8 — Calendar feed (was open point #10.4 → iCal first)
+Baseline is a **read-only iCalendar subscribe link**:
+`GET /api/calendar/{token}.ics` (no auth header needed — the token *is* the
+credential). Tasks with planned start/end become `VEVENT`s, as do standalone
+`CalendarEntry`s. Tokens are per-user and/or per-project (`CalendarFeedToken`).
+A full read-write CalDAV server (RFC 4791) is explicitly a **later stage**.
+
+### D9 — Pages demo is fully mocked (was open point #10.5 → "fully mocked")
+The GitHub Pages demo builds the frontend with `VITE_MOCK_AUTH=true`. In that
+mode the frontend uses an **in-memory mock API** with seed data and a dev
+user-switch dropdown (TestAdmin/TestUser1-3). No backend is required for the demo.
+When `VITE_MOCK_AUTH` is unset/false, the frontend talks to a real backend at
+`VITE_API_BASE_URL`.
+
+### D10 — CSS strategy (spec §5)
+- Styling is primarily on **HTML tag level** (element selectors: `button`,
+  `table`, `input`, `dialog`, `h1..h3`, …).
+- Design tokens live as **CSS custom properties** in `src/styles/theme.css`.
+- Base/reset/element styles in `src/styles/base.css`.
+- No CSS-in-JS; component-scoped classes are kept to a minimum (only structural
+  helpers like `.board-column` where a tag selector is insufficient).
+- The theme is swappable across modules by replacing `theme.css`.
+
+### D11 — Build tooling without local Maven
+The dev machine may not have Maven on PATH. The repo ships the **Maven wrapper**
+(`./mvnw`) and the Docker build uses the official `maven` image, so neither CI nor
+the container depends on a host Maven install.
+
+### D12 — IDs
+Entity IDs are UUIDs (string in the API). Avoids cross-module collisions when the
+modules are later merged behind one gateway.
+
+---
+
+## Open points / later stages
+
+- **OP1 — Real Authentik claim values.** `app.auth.roles-claim` /
+  `app.auth.admin-role` default to `groups` / `planning-admin`. Update once the
+  real Authentik tenant is configured. (D2)
+- **OP2 — Full CalDAV (read-write, RFC 4791).** Out of scope for the baseline;
+  iCal subscribe link only. (D8)
+- **OP3 — Notifications / reminders** (e-mail, push) — not in scope.
+- **OP4 — Per-project roles** beyond ADMIN/USER — the schema has an optional
+  membership `role` column but it is not yet used for fine-grained authz.
