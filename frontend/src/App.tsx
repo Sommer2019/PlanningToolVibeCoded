@@ -11,6 +11,7 @@ import { BoardPage } from "./pages/BoardPage";
 import { RoadmapPage } from "./pages/RoadmapPage";
 import { TasklistPage } from "./pages/TasklistPage";
 import { CalendarPage } from "./pages/CalendarPage";
+import { LeaderboardPage } from "./pages/LeaderboardPage";
 import { MembersPage } from "./pages/MembersPage";
 
 function Header() {
@@ -47,6 +48,7 @@ export default function App() {
                   <Route path="roadmap" element={<RoadmapPage />} />
                   <Route path="tasklist" element={<TasklistPage />} />
                   <Route path="calendar" element={<CalendarPage />} />
+                  <Route path="leaderboard" element={<LeaderboardPage />} />
                   <Route path="members" element={<MembersPage />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />

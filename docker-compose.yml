@@ -1,18 +1,13 @@
-# Local/integration stack: Postgres + backend (Team 4 — Projektplanung).
-# Backend runs in MOCK auth mode for convenience — select an identity with the
-# `X-Mock-User` header (TestAdmin / TestUser1..3). NEVER use mock in production.
+# CPP — Team 4 (Projektplanung). Self-contained stack: Postgres + backend + SPA.
+# Everything is configured here; no external .env is needed. Real Authentik auth
+# is ON.
 #
-#   docker compose up --build
+# Routing (Traefik, TLS terminated at the gateway -> plain HTTP to the services):
+#   PathPrefix(`/planning`)      -> planning-frontend (nginx); prefix stripped
+#   PathPrefix(`/api/planning`)  -> planning-backend (served natively, no rewrite)
 #
-# Backend (direct):   http://localhost:8004/api
-# Health:             http://localhost:8004/health        -> {"status":"ok"}
-# OpenAPI:            http://localhost:8004/openapi.json
-# Swagger UI:         http://localhost:8004/swagger-ui.html
-#
-# Service names are prefixed `planning-` so they don't collide when this snippet
-# is merged into the orchestrator stack. The Traefik labels route `/planning` to
-# this service (port 8004) and strip the prefix, so the module keeps serving
-# `/health`, `/api/...`, `/openapi.json` at its root.
+# The backend is HTTP-only on 8004 by design — never send TLS to it directly.
+# For local debugging without a gateway, uncomment the `ports:` blocks.
 
 services:
   planning-postgres:
@@ -21,10 +16,8 @@ services:
       POSTGRES_DB: planning
       POSTGRES_USER: planning
       POSTGRES_PASSWORD: planning
-    ports:
-      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - planning-pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U planning -d planning"]
       interval: 10s
@@ -33,33 +26,54 @@ services:
 
   planning-backend:
     build:
-      context: ./backend
-      dockerfile: ../docker/Dockerfile
+      context: backend
+      dockerfile: docker/Dockerfile
     image: ghcr.io/sommer2019/planningtoolvibecoded-backend:latest
     depends_on:
       planning-postgres:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      # --- Real Authentik auth (mock OFF) ---
       APP_AUTH_MOCK: "false"
       APP_AUTH_ISSUER_URI: "https://hackathon.amogusdrip.de/auth/application/o/vibecode/"
-      SPRING_DATASOURCE_URL: jdbc:postgresql://planning-postgres:5432/planning
-      SPRING_DATASOURCE_USERNAME: planning
-      SPRING_DATASOURCE_PASSWORD: planning
-      APP_CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:4173"
-    networks:
-      - default
-      - cpp-edge
-    ports:
-      - "8004:8004"
+      APP_AUTH_ROLES_CLAIM: "groups"
+      APP_AUTH_ADMIN_ROLE: "planning-admin"
+      # Same-origin behind the gateway; listed for any cross-origin case.
+      APP_CORS_ALLOWED_ORIGINS: "https://hackathon.amogusdrip.de"
+      # --- Database ---
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://planning-postgres:5432/planning"
+      SPRING_DATASOURCE_USERNAME: "planning"
+      SPRING_DATASOURCE_PASSWORD: "planning"
+      SERVER_PORT: "8004"
+    # ports:
+    #   - "8004:8004"   # local debugging only
     labels:
       - traefik.enable=true
-      - traefik.http.routers.planning-api.rule=PathPrefix(`/api/planning`)
+      - traefik.http.routers.planning-api.rule=PathPrefix(`/cpp-api/planning`)
+      - traefik.http.routers.planning-api.entrypoints=websecure
+      - traefik.http.routers.planning-api.tls.certresolver=letsencrypt
       - traefik.http.services.planning-api.loadbalancer.server.port=8004
 
-volumes:
-  pgdata:
+  planning-frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+      args:
+        BASE_PATH: "/planning/"
+        VITE_API_BASE_URL: ""
+        VITE_OIDC_AUTHORITY: "https://hackathon.amogusdrip.de/auth/application/o/vibecode/"
+        VITE_OIDC_CLIENT_ID: "oIgnzizlgBgGKtC1SJBvM6HqEtasIMXxkTsIN8O9"
+    image: ghcr.io/sommer2019/planningtoolvibecoded-frontend:latest
+    depends_on:
+      - planning-backend
+    # ports:
+    #   - "8014:80"     # local debugging only
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.planning-web.rule=PathPrefix(`/planning`)
+      - traefik.http.routers.planning-web.middlewares=planning-web-strip
+      - traefik.http.services.planning-web.loadbalancer.server.port=80
+      - traefik.http.middlewares.planning-web-strip.stripprefix.prefixes=/planning
 
-networks:
-  cpp-edge:
-    external: true
+volumes:
+  planning-pgdata:

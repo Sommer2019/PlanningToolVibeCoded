@@ -6,6 +6,7 @@ import { userColor } from "../util/userColor";
 import { statusColor } from "../util/statusColor";
 import { useProjectCtx } from "../pages/ProjectLayout";
 import { useAuth } from "../auth/AuthContext";
+import { downloadTaskIcal } from "../util/ical";
 
 interface Props {
   task: Task;
@@ -80,12 +81,15 @@ export function TaskPopover({ task, pos, onClose, onEdit, onStatusChange }: Prop
         )}
       </div>
 
-      <div className="row" style={{ alignItems: "center", gap: "var(--space-2)" }}>
+      <div className="row" style={{ alignItems: "center", gap: "var(--space-2)", justifyContent: "space-between" }}>
         <span
           className="badge"
           style={{ backgroundColor: userColor(task.assignee), color: "var(--color-text)" }}
         >
           {task.assignee || t("task.form.noAssignee")}
+        </span>
+        <span className="badge" style={{ backgroundColor: "var(--bg-card-alt)" }}>
+          ⭐ {task.difficulty ?? 1}
         </span>
       </div>
 
@@ -99,8 +103,16 @@ export function TaskPopover({ task, pos, onClose, onEdit, onStatusChange }: Prop
         </div>
       )}
 
-      {onEdit && canEditTask && (
-        <div style={{ marginTop: "var(--space-3)", textAlign: "right" }}>
+      <div style={{ marginTop: "var(--space-3)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <button 
+          data-variant="ghost"
+          onClick={() => downloadTaskIcal(task)} 
+          style={{ padding: '2px 8px', fontSize: 'var(--font-size-sm)' }}
+          title={t("task.form.addToCalendar")}
+        >
+          {t("task.form.addToCalendar")}
+        </button>
+        {onEdit && canEditTask && (
           <button 
             data-variant="secondary"
             onClick={onEdit} 
@@ -108,8 +120,8 @@ export function TaskPopover({ task, pos, onClose, onEdit, onStatusChange }: Prop
           >
             {t("task.form.titleEdit")}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

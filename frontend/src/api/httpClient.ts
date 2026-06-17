@@ -5,6 +5,7 @@ import type {
   CalendarEntryInput,
   CreateProjectInput,
   FeedToken,
+  LeaderboardEntry,
   Me,
   Membership,
   MockUser,
@@ -110,6 +111,8 @@ export const httpApi: Api = {
   createFeedToken: (projectId) =>
     request<FeedToken>("POST", "/api/planning/calendar/feed-tokens", { projectId: projectId ?? null }),
   deleteFeedToken: (id) => request<void>("DELETE", `/api/planning/calendar/feed-tokens/${id}`),
+
+  getLeaderboard: (projectId) => request<LeaderboardEntry[]>("GET", `/api/planning/projects/${projectId}/leaderboard`),
 
   // Absolute subscribe URL. BASE_URL may be origin-relative ("") behind the
   // gateway, so fall back to the page origin to keep the link copy-pasteable.

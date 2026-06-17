@@ -60,6 +60,7 @@ class TaskService(
             plannedEnd = req.plannedEnd,
             actualStart = req.actualStart,
             actualEnd = req.actualEnd,
+            difficulty = req.difficulty,
             createdBy = currentUser.userRef(),
         )
         return tasks.save(task)
@@ -80,6 +81,7 @@ class TaskService(
         task.plannedEnd = req.plannedEnd
         task.actualStart = req.actualStart
         task.actualEnd = req.actualEnd
+        task.difficulty = req.difficulty
         return tasks.save(task)
     }
 

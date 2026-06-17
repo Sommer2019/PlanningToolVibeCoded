@@ -119,6 +119,7 @@ export function BoardPage() {
           plannedEnd: task.plannedEnd,
           actualStart: task.actualStart,
           actualEnd: task.actualEnd,
+          difficulty: task.difficulty,
         });
       } else {
         await api.updateTaskStatus(taskId, statusId);

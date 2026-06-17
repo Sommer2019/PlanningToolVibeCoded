@@ -52,6 +52,9 @@ class Task(
     @Column(nullable = false)
     var locked: Boolean = false,
 
+    @Column(nullable = false)
+    var difficulty: Int = 1,
+
     @Column(name = "created_by", nullable = false, updatable = false)
     var createdBy: String,
 ) {

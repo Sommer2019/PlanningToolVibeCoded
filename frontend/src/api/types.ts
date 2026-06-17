@@ -52,6 +52,7 @@ export interface Task {
   actualStart: string | null;
   actualEnd: string | null;
   locked: boolean;
+  difficulty: number;
   createdBy: string;
   createdAt: string | null;
 }
@@ -74,6 +75,12 @@ export interface FeedToken {
   feedPath: string;
 }
 
+export interface LeaderboardEntry {
+  userRef: string;
+  score: number;
+  completedTasks: number;
+}
+
 // ---- request payloads ----
 
 export interface CreateProjectInput {
@@ -90,6 +97,7 @@ export interface TaskInput {
   plannedEnd: string;
   actualStart?: string | null;
   actualEnd?: string | null;
+  difficulty: number;
 }
 
 export interface CalendarEntryInput {
@@ -147,6 +155,9 @@ export interface Api {
   listFeedTokens(): Promise<FeedToken[]>;
   createFeedToken(projectId?: string | null): Promise<FeedToken>;
   deleteFeedToken(id: string): Promise<void>;
+
+  // leaderboard
+  getLeaderboard(projectId: string): Promise<LeaderboardEntry[]>;
 
   /** Absolute URL for a feed path (for the subscribe link). */
   feedUrl(feedPath: string): string;

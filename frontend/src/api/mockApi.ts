@@ -5,6 +5,7 @@ import type {
   CalendarEntryInput,
   CreateProjectInput,
   FeedToken,
+  LeaderboardEntry,
   Me,
   Membership,
   MockUser,
@@ -65,14 +66,14 @@ const memberships: Membership[] = [
 ];
 
 const tasks: Task[] = [
-  mkTask(pA, "Design homepage", "TestUser1", PROG, -2, 5, false),
-  mkTask(pA, "Set up CMS", "TestUser2", TODO, 1, 8, false),
-  mkTask(pA, "Content migration", "TestUser2", TODO, 6, 14, false),
-  mkTask(pA, "SEO audit", "TestUser1", reviewStatus.id, 3, 7, true),
-  mkTask(pA, "Launch checklist", "TestUser1", DONE, -10, -1, false),
-  mkTask(pB, "API integration", "TestUser1", PROG, 0, 9, false),
-  mkTask(pB, "Push notifications", "TestUser3", TODO, 4, 12, false),
-  mkTask(pB, "Beta release", "TestAdmin", TODO, 10, 20, false),
+  mkTask(pA, "Design homepage", "TestUser1", PROG, -2, 5, false, 3),
+  mkTask(pA, "Set up CMS", "TestUser2", TODO, 1, 8, false, 5),
+  mkTask(pA, "Content migration", "TestUser2", TODO, 6, 14, false, 2),
+  mkTask(pA, "SEO audit", "TestUser1", reviewStatus.id, 3, 7, true, 8),
+  mkTask(pA, "Launch checklist", "TestUser1", DONE, -10, -1, false, 1),
+  mkTask(pB, "API integration", "TestUser1", PROG, 0, 9, false, 10),
+  mkTask(pB, "Push notifications", "TestUser3", TODO, 4, 12, false, 6),
+  mkTask(pB, "Beta release", "TestAdmin", TODO, 10, 20, false, 4),
 ];
 
 function mkTask(
@@ -83,6 +84,7 @@ function mkTask(
   startDay: number,
   endDay: number,
   locked: boolean,
+  difficulty: number,
 ): Task {
   return {
     id: uid(),
@@ -96,6 +98,7 @@ function mkTask(
     actualStart: null,
     actualEnd: null,
     locked,
+    difficulty,
     createdBy: assignee,
     createdAt: iso(startDay - 1),
   };
@@ -318,6 +321,7 @@ export const mockApi: Api = {
       actualStart: input.actualStart ?? null,
       actualEnd: input.actualEnd ?? null,
       locked: false,
+      difficulty: input.difficulty,
       createdBy: getActiveUser(),
       createdAt: new Date().toISOString(),
     };
@@ -337,6 +341,7 @@ export const mockApi: Api = {
       plannedEnd: input.plannedEnd,
       actualStart: input.actualStart ?? null,
       actualEnd: input.actualEnd ?? null,
+      difficulty: input.difficulty,
     });
     return delay(t);
   },
@@ -423,6 +428,28 @@ export const mockApi: Api = {
   deleteFeedToken: (id) => {
     remove(feedTokens, (f) => f.id === id);
     return delay(undefined);
+  },
+
+  getLeaderboard: (projectId) => {
+    requireMember(projectId);
+    const projStatuses = statuses.filter((s) => s.projectId === projectId || s.projectId === null);
+    if (projStatuses.length === 0) return delay([]);
+    const doneStatusId = projStatuses.reduce((prev, curr) => (prev.order > curr.order ? prev : curr)).id;
+
+    const projTasks = tasks.filter((t) => t.projectId === projectId && t.statusId === doneStatusId && t.assignee);
+    const scores = new Map<string, { score: number; count: number }>();
+    for (const t of projTasks) {
+      const current = scores.get(t.assignee!) || { score: 0, count: 0 };
+      scores.set(t.assignee!, { score: current.score + t.difficulty, count: current.count + 1 });
+    }
+
+    const res: LeaderboardEntry[] = Array.from(scores.entries()).map(([userRef, data]) => ({
+      userRef,
+      score: data.score,
+      completedTasks: data.count,
+    }));
+    res.sort((a, b) => b.score - a.score);
+    return delay(res);
   },
 
   feedUrl: (feedPath) => `https://demo.sommer2019.de${feedPath}`,

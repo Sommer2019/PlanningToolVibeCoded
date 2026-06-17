@@ -23,6 +23,7 @@ const tabs = [
   { to: "roadmap", key: "nav.roadmap" },
   { to: "tasklist", key: "nav.tasklist" },
   { to: "calendar", key: "nav.calendar" },
+  { to: "leaderboard", key: "nav.leaderboard" },
   { to: "members", key: "nav.members" },
 ];
 

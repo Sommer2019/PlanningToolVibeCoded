@@ -88,6 +88,7 @@ data class TaskResponse(
     val actualStart: Instant?,
     val actualEnd: Instant?,
     val locked: Boolean,
+    val difficulty: Int,
     val createdBy: String,
     val createdAt: Instant?,
 )
@@ -101,6 +102,7 @@ data class CreateTaskRequest(
     @field:NotNull val plannedEnd: Instant,
     val actualStart: Instant? = null,
     val actualEnd: Instant? = null,
+    val difficulty: Int = 1,
 )
 
 data class UpdateTaskRequest(
@@ -112,6 +114,7 @@ data class UpdateTaskRequest(
     @field:NotNull val plannedEnd: Instant,
     val actualStart: Instant? = null,
     val actualEnd: Instant? = null,
+    val difficulty: Int = 1,
 )
 
 data class UpdateTaskStatusRequest(
@@ -130,6 +133,7 @@ fun Task.toResponse() = TaskResponse(
     actualStart = actualStart,
     actualEnd = actualEnd,
     locked = locked,
+    difficulty = difficulty,
     createdBy = createdBy,
     createdAt = createdAt,
 )
@@ -179,4 +183,12 @@ data class FeedTokenResponse(
     val userRef: String?,
     /** Relative path of the subscribable feed, e.g. /api/calendar/{token}.ics */
     val feedPath: String,
+)
+
+// ---------- Leaderboard ----------
+
+data class LeaderboardEntryResponse(
+    val userRef: String,
+    val score: Int,
+    val completedTasks: Int,
 )

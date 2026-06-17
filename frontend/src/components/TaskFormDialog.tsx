@@ -39,6 +39,7 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
   const [statusId, setStatusId] = useState("");
   const [plannedStart, setPlannedStart] = useState(defaultStart());
   const [plannedEnd, setPlannedEnd] = useState(defaultEnd());
+  const [difficulty, setDifficulty] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -53,6 +54,7 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
       setStatusId(task.statusId);
       setPlannedStart(toLocalInput(task.plannedStart));
       setPlannedEnd(toLocalInput(task.plannedEnd));
+      setDifficulty(task.difficulty ?? 1);
     } else {
       setTitle("");
       setDescription("");
@@ -60,6 +62,7 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
       setStatusId(statuses[0]?.id ?? "");
       setPlannedStart(defaultStart());
       setPlannedEnd(defaultEnd());
+      setDifficulty(1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, task]);
@@ -82,6 +85,7 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
       statusId,
       plannedStart: fromLocalInput(plannedStart),
       plannedEnd: fromLocalInput(plannedEnd),
+      difficulty,
     };
     setSaving(true);
     try {
@@ -157,6 +161,18 @@ export function TaskFormDialog({ open, projectId, statuses, members, task, onClo
             />
           </fieldset>
         </div>
+        <fieldset>
+          <label htmlFor="t-diff">{t("task.form.difficulty")}</label>
+          <input
+            id="t-diff"
+            type="number"
+            min={1}
+            max={10}
+            required
+            value={difficulty}
+            onChange={(e) => setDifficulty(parseInt(e.target.value, 10) || 1)}
+          />
+        </fieldset>
         <div className="actions">
           <button type="button" data-variant="secondary" onClick={onClose}>
             {t("common.cancel")}

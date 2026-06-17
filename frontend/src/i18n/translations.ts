@@ -13,6 +13,7 @@ const en: Dict = {
   "nav.roadmap": "Roadmap",
   "nav.tasklist": "Tasklist",
   "nav.calendar": "Calendar",
+  "nav.leaderboard": "Leaderboard",
   "nav.members": "Members",
 
   "common.loading": "Loading…",
@@ -80,6 +81,15 @@ const en: Dict = {
   "task.form.noAssignee": "No User",
   "task.form.errRequired": "Title and status are required.",
   "task.form.errDates": "Planned end must not be before planned start.",
+  "task.form.addToCalendar": "Export to Calendar",
+  "task.form.difficulty": "Difficulty (1-10)",
+
+  "leaderboard.title": "Leaderboard",
+  "leaderboard.empty": "No completed tasks yet. The leaderboard is empty.",
+  "leaderboard.rank": "Rank",
+  "leaderboard.employee": "Employee",
+  "leaderboard.completedTasks": "Completed Tasks",
+  "leaderboard.score": "Score",
 
   "roadmap.task": "Task",
   "roadmap.empty": "No tasks to show on the roadmap.",
@@ -131,6 +141,7 @@ const de: Dict = {
   "nav.roadmap": "Roadmap",
   "nav.tasklist": "Aufgabenliste",
   "nav.calendar": "Kalender",
+  "nav.leaderboard": "Bestenliste",
   "nav.members": "Mitglieder",
 
   "common.loading": "Lädt…",
@@ -199,6 +210,15 @@ const de: Dict = {
   "task.form.noAssignee": "Kein Benutzer",
   "task.form.errRequired": "Titel und Status sind Pflicht.",
   "task.form.errDates": "Geplantes Ende darf nicht vor dem Start liegen.",
+  "task.form.addToCalendar": "In Kalender exportieren",
+  "task.form.difficulty": "Schwierigkeit (1-10)",
+
+  "leaderboard.title": "Bestenliste",
+  "leaderboard.empty": "Noch keine abgeschlossenen Aufgaben. Die Bestenliste ist leer.",
+  "leaderboard.rank": "Rang",
+  "leaderboard.employee": "Mitarbeiter",
+  "leaderboard.completedTasks": "Abgeschlossene Aufgaben",
+  "leaderboard.score": "Punkte",
 
   "roadmap.task": "Aufgabe",
   "roadmap.empty": "Keine Aufgaben für die Roadmap.",
