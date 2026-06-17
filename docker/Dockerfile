@@ -27,10 +27,10 @@ COPY --from=build /workspace/target/*.jar app.jar
 RUN chown -R app:app /app
 USER app
 
-EXPOSE 8080
+EXPOSE 8004
 ENV JAVA_OPTS=""
 
 HEALTHCHECK --interval=15s --timeout=3s --start-period=40s --retries=5 \
-  CMD ["sh", "-c", "curl -fsS http://localhost:8080/actuator/health | grep -q UP || exit 1"]
+  CMD ["sh", "-c", "curl -fsS http://localhost:8004/health | grep -q ok || exit 1"]
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

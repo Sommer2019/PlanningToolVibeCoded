@@ -43,8 +43,10 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
                 it.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                it.requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
-                it.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                // Gateway health check (CPP convention) + Actuator health.
+                it.requestMatchers("/health", "/actuator/health/**", "/actuator/info").permitAll()
+                // OpenAPI spec + Swagger UI.
+                it.requestMatchers("/openapi.json", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // The iCal feed authenticates via the token in the URL, not a header.
                 it.requestMatchers(HttpMethod.GET, "/api/calendar/*.ics").permitAll()
                 it.requestMatchers("/api/**").authenticated()

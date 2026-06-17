@@ -113,6 +113,27 @@ interpolation. A header **segmented control offers System / DE / EN** (persisted
 `System` follows `navigator.language` (de* → German). Dates/weekday/month names use
 `Intl` with the active locale.
 
+### D16 — CPP team conventions (gateway interface)
+Compliance with the binding team checklist (Team 4 — Projektplanung, `/planning`,
+port `8004`):
+- **§1 Health:** added `GET /health` → `{"status":"ok"}` (public), separate from
+  the richer `/actuator/health`.
+- **§2 Docs:** OpenAPI spec at `/openapi.json` (`springdoc.api-docs.path`).
+- **§3 Format:** REST/JSON only (already the case).
+- **§4 Auth:** Authentik JWT — issuer/JWKS/claims configurable (D2); exact token
+  details pending the cross-team meeting (placeholder upstream).
+- **§5/§6 Container & routing:** Dockerfile + compose snippet with Traefik labels
+  (`PathPrefix(/planning)`, port 8004) **plus a `StripPrefix /planning` middleware**
+  so the module keeps serving `/health`, `/api/...`, `/openapi.json` at its root and
+  the internal health-check URL stays prefix-free. *Assumption to confirm at the
+  9-Uhr sync; if the gateway does not strip, we swap to a server context-path.*
+- **§7 Styling:** see below (D15) — same tokens / `[data-theme="dark"]` / shared
+  utility classes as the canonical `styles/Stylesheet.css`.
+- **§8 Registration:** `modules.json` entry shipped at repo root.
+- **§9 Admin area:** not needed — admin actions (lock/unlock, status creation,
+  membership approval) are inline in the module UI and gated by the JWT admin role,
+  so no separate `/planning/admin` and no `adminUrl`.
+
 ### D15 — Shared theme tokens
 `theme.css` carries the cross-module design-token contract (Noto Sans, palette,
 spacing, `.btn`/`.input-field` utilities) and maps those tokens onto the semantic

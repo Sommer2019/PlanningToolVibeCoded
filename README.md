@@ -60,9 +60,10 @@ cd docker
 docker compose up --build
 ```
 
-- Backend API:  http://localhost:8080/api
-- Swagger UI:   http://localhost:8080/swagger-ui.html
-- Health:       http://localhost:8080/actuator/health
+- Backend API:  http://localhost:8004/api
+- Swagger UI:   http://localhost:8004/swagger-ui.html
+- OpenAPI spec: http://localhost:8004/openapi.json
+- Health:       http://localhost:8004/health  → `{"status":"ok"}`
 
 Pick the active mock identity by sending header `X-Mock-User: TestAdmin`
 (also `TestUser1`, `TestUser2`, `TestUser3`).
@@ -72,7 +73,7 @@ Pick the active mock identity by sending header `X-Mock-User: TestAdmin`
 ```bash
 cd frontend
 npm ci
-npm run dev        # talks to a backend at VITE_API_BASE_URL (default http://localhost:8080)
+npm run dev        # talks to a backend at VITE_API_BASE_URL (default http://localhost:8004)
 ```
 
 Run the **fully mocked** demo (no backend needed):
@@ -110,12 +111,13 @@ You still need a Postgres reachable at the configured URL (see
 | `SPRING_DATASOURCE_USERNAME` | `planning` | DB user |
 | `SPRING_DATASOURCE_PASSWORD` | `planning` | DB password |
 | `APP_CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated CORS origins |
+| `SERVER_PORT` | `8004` | HTTP port (Team 4 convention) |
 
 ## Configuration (frontend)
 
 | Env var | Default | Meaning |
 |---------|---------|---------|
-| `VITE_API_BASE_URL` | `http://localhost:8080` | Backend base URL |
+| `VITE_API_BASE_URL` | `http://localhost:8004` | Backend base URL |
 | `VITE_MOCK_AUTH` | `false` | Use in-memory mock API + dev user switcher |
 
 ---
@@ -127,6 +129,25 @@ You still need a Postgres reachable at the configured URL (see
   git SHA).
 - **Frontend** → builds with `VITE_MOCK_AUTH=true` and deploys the clickable demo
   to **GitHub Pages**: https://sommer2019.github.io/PlanningToolVibeCoded/
+
+## Gateway integration (CPP team conventions)
+
+This module is **Team 4 — Projektplanung**, route `/planning`, port `8004`.
+
+- **Health:** `GET /health` → `200 {"status":"ok"}` (public).
+- **API docs:** `GET /openapi.json` (OpenAPI 3) + Swagger UI at `/swagger-ui.html`.
+- **Data format:** REST/JSON only.
+- **Auth:** JWT from the central Authentik instance; issuer/JWKS/claim mapping are
+  configurable (`APP_AUTH_*`, see above). Token specifics are pinned by Team 3/Gruppe 5.
+- **Container:** [`docker/Dockerfile`](docker/Dockerfile) + the
+  [`docker/docker-compose.yml`](docker/docker-compose.yml) service snippet carries
+  the Traefik labels (`PathPrefix(/planning)`, port 8004, `StripPrefix /planning`).
+- **Registration:** [`modules.json`](modules.json) holds this module's gateway entry.
+- **Styling:** the frontend uses the shared design-token contract (CSS variables,
+  `[data-theme="dark"]`, `.btn`/`.input-field`/`.feedback-*`/spacing utilities) in
+  [`frontend/src/styles/theme.css`](frontend/src/styles/theme.css), which mirrors the
+  shared `styles/Stylesheet.css` so it can be swapped for the canonical file when the
+  modules are merged.
 
 ## License
 
