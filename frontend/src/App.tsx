@@ -18,7 +18,8 @@ function Header() {
   return (
     <header className="app-header">
       <h1>
-        <Link to="/" style={{ color: "inherit" }}>
+        <Link to="/" style={{ color: "inherit", display: "flex", alignItems: "center", gap: "var(--space-2)", textDecoration: "none" }}>
+          <img src="/logo.svg" alt="Logo" style={{ height: "32px" }} />
           {t("app.title")}
         </Link>
       </h1>
