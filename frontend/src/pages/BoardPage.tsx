@@ -16,7 +16,7 @@ const MINE = "__mine__";
 const ALL = "__all__";
 
 export function BoardPage() {
-  const { project, statuses, members, isOwnerOrAdmin } = useProjectCtx();
+  const { project, statuses, members, isOwnerOrAdmin, reload: reloadProject } = useProjectCtx();
   const { me } = useAuth();
   const { t } = useI18n();
   const [filter, setFilter] = useState<string[]>([ALL]);
@@ -269,6 +269,33 @@ export function BoardPage() {
               </section>
             );
           })}
+          {me?.admin && (
+            <section 
+              className="board-column" 
+              style={{ 
+                background: "transparent", 
+                border: "2px dashed var(--color-border)", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center", 
+                cursor: "pointer",
+                color: "var(--color-text-muted)"
+              }} 
+              onClick={async () => {
+                const name = prompt(t("board.newStatusPrompt") || "Neuer Status:");
+                if (name) {
+                  try {
+                    await api.createStatus(name, project.id, statuses.length);
+                    reloadProject();
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : String(e));
+                  }
+                }
+              }}
+            >
+              + {t("board.addStatus") || "Status hinzufügen"}
+            </section>
+          )}
         </div>
       )}
 

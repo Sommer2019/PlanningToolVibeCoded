@@ -50,11 +50,8 @@ services:
       - "8004:8004"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.planning.rule=PathPrefix(`/planning`)
-      - traefik.http.services.planning.loadbalancer.server.port=8004
-      # Strip /planning so the module serves /health, /api/..., /openapi.json at root.
-      - traefik.http.routers.planning.middlewares=planning-stripprefix
-      - traefik.http.middlewares.planning-stripprefix.stripprefix.prefixes=/planning
+      - traefik.http.routers.planning-api.rule=PathPrefix(`/api`)
+      - traefik.http.services.planning-api.loadbalancer.server.port=8004
 
 volumes:
   pgdata:
