@@ -310,8 +310,8 @@ export const mockApi: Api = {
       id: uid(),
       projectId,
       title: input.title,
-      description: input.description,
-      assignee: input.assignee,
+      description: input.description ?? null,
+      assignee: input.assignee ?? null,
       statusId: input.statusId,
       plannedStart: input.plannedStart,
       plannedEnd: input.plannedEnd,
@@ -330,8 +330,8 @@ export const mockApi: Api = {
     validateDates(input);
     Object.assign(t, {
       title: input.title,
-      description: input.description,
-      assignee: input.assignee,
+      description: input.description ?? null,
+      assignee: input.assignee ?? null,
       statusId: input.statusId,
       plannedStart: input.plannedStart,
       plannedEnd: input.plannedEnd,
