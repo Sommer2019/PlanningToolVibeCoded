@@ -45,8 +45,8 @@ const statuses: Status[] = [
   { id: DONE, projectId: null, name: "Done", order: 2, isDefault: true },
 ];
 
-const pA = uid();
-const pB = uid();
+const pA = "11111111-1111-1111-1111-111111111111";
+const pB = "22222222-2222-2222-2222-222222222222";
 const reviewStatus: Status = { id: uid(), projectId: pA, name: "Review", order: 3, isDefault: false };
 statuses.push(reviewStatus);
 
