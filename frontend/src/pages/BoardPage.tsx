@@ -18,7 +18,7 @@ export function BoardPage() {
   const { project, statuses, members, isOwnerOrAdmin } = useProjectCtx();
   const { me } = useAuth();
   const { t } = useI18n();
-  const [filter, setFilter] = useState<string>(ALL);
+  const [filter, setFilter] = useState<string[]>([ALL]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,12 +46,48 @@ export function BoardPage() {
   }, [project.id]);
 
   const memberRefs = members.filter((m) => m.status === "MEMBER").map((m) => m.userRef);
+  const otherMembers = memberRefs.filter((m) => m !== me?.subject);
 
   const shown = useMemo(() => {
-    if (filter === ALL) return tasks;
-    if (filter === MINE) return tasks.filter((t) => t.assignee === me?.subject);
-    return tasks.filter((t) => t.assignee === filter);
+    if (filter.includes(ALL)) return tasks;
+    return tasks.filter((t) => {
+      if (filter.includes(MINE) && t.assignee === me?.subject) return true;
+      if (t.assignee && filter.includes(t.assignee)) return true;
+      return false;
+    });
   }, [tasks, filter, me]);
+
+  const handleFilterClick = (val: string, multi: boolean) => {
+    if (val === ALL) {
+      setFilter([ALL]);
+      return;
+    }
+    let next = [...filter];
+    if (next.includes(ALL)) {
+      if (multi) {
+        next = [MINE, ...otherMembers].filter((x) => x !== val);
+      } else {
+        next = [val];
+      }
+    } else {
+      if (multi) {
+        if (next.includes(val)) {
+          next = next.filter((x) => x !== val);
+        } else {
+          next.push(val);
+        }
+      } else {
+        next = [val];
+      }
+    }
+    const allPossible = [MINE, ...otherMembers];
+    const isAll = allPossible.length > 0 && allPossible.every((x) => next.includes(x));
+    if (next.length === 0 || isAll) {
+      setFilter([ALL]);
+    } else {
+      setFilter(next);
+    }
+  };
 
   function canEdit(t: Task): boolean {
     return !t.locked || Boolean(me?.admin) || t.createdBy === me?.subject;
@@ -114,32 +150,33 @@ export function BoardPage() {
         <div className="row wrap" style={{ gap: "var(--space-2)", alignItems: "center" }}>
           <span className="muted" style={{ marginRight: "var(--space-2)" }}>{t("board.filter.label")}</span>
           <button
-            data-variant={filter === ALL ? "primary" : "ghost"}
-            onClick={() => setFilter(ALL)}
+            data-variant={filter.includes(ALL) ? "primary" : "ghost"}
+            onClick={(e) => handleFilterClick(ALL, e.ctrlKey || e.metaKey)}
             style={{ borderRadius: "var(--radius-lg)", padding: "4px 12px", border: "1px solid var(--border-color)" }}
           >
             {t("board.filter.all")}
           </button>
           <button
-            data-variant={filter === MINE ? "primary" : "ghost"}
-            onClick={() => setFilter(MINE)}
+            data-variant={filter.includes(MINE) ? "primary" : "ghost"}
+            onClick={(e) => handleFilterClick(MINE, e.ctrlKey || e.metaKey)}
             style={{ borderRadius: "var(--radius-lg)", padding: "4px 12px", border: "1px solid var(--border-color)" }}
           >
             {t("board.filter.mine")}
           </button>
-          {memberRefs.map((m) => {
-            const isSelected = filter === m;
+          {otherMembers.map((m) => {
+            const isSelected = filter.includes(m);
             return (
               <button
                 key={m}
-                onClick={() => setFilter(m)}
+                onClick={(e) => handleFilterClick(m, e.ctrlKey || e.metaKey)}
                 style={{
                   borderRadius: "var(--radius-lg)",
                   padding: "4px 12px",
                   border: isSelected ? `2px solid var(--color-primary)` : "1px solid var(--border-color)",
                   backgroundColor: userColor(m),
                   color: "var(--color-text)",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  opacity: isSelected || filter.includes(ALL) ? 1 : 0.6
                 }}
               >
                 {m}
