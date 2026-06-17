@@ -293,6 +293,7 @@ export function BoardPage() {
             setPopoverTask(null);
             setEditing(popoverTask.task);
           }}
+          onStatusChange={load}
         />
       )}
     </div>

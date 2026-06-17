@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { api } from "../api";
 import type { Task } from "../api";
 import { useI18n } from "../i18n/I18nContext";
 import { userColor } from "../util/userColor";
@@ -11,9 +12,10 @@ interface Props {
   pos: { x: number; y: number };
   onClose: () => void;
   onEdit?: () => void;
+  onStatusChange?: () => void;
 }
 
-export function TaskPopover({ task, pos, onClose, onEdit }: Props) {
+export function TaskPopover({ task, pos, onClose, onEdit, onStatusChange }: Props) {
   const { t } = useI18n();
   const { statuses } = useProjectCtx();
   const { me } = useAuth();
@@ -58,7 +60,24 @@ export function TaskPopover({ task, pos, onClose, onEdit }: Props) {
 
       <div className="row" style={{ alignItems: "center", gap: "var(--space-2)" }}>
         <span className="dot" style={{ background: statusColor(statusName) }} />
-        <span>{statusName}</span>
+        {canEditTask ? (
+          <select 
+            value={task.statusId}
+            onChange={async (e) => {
+              try {
+                await api.updateTaskStatus(task.id, e.target.value);
+                if (onStatusChange) onStatusChange();
+              } catch (err) {
+                console.error(err);
+              }
+            }}
+            style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}
+          >
+            {statuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        ) : (
+          <span>{statusName}</span>
+        )}
       </div>
 
       <div className="row" style={{ alignItems: "center", gap: "var(--space-2)" }}>
@@ -82,7 +101,13 @@ export function TaskPopover({ task, pos, onClose, onEdit }: Props) {
 
       {onEdit && canEditTask && (
         <div style={{ marginTop: "var(--space-3)", textAlign: "right" }}>
-          <button onClick={onEdit}>{t("task.form.titleEdit")}</button>
+          <button 
+            data-variant="secondary"
+            onClick={onEdit} 
+            style={{ padding: '2px 8px', fontSize: 'var(--font-size-sm)' }}
+          >
+            {t("task.form.titleEdit")}
+          </button>
         </div>
       )}
     </div>

@@ -15,6 +15,8 @@ interface DayEvent {
   label: string;
   kind: "task" | "entry";
   task?: Task;
+  isStart?: boolean;
+  isEnd?: boolean;
 }
 
 function startOfMonth(d: Date): Date {
@@ -59,13 +61,17 @@ export function CalendarPage() {
     const d0 = startOfDay(day);
     const events: DayEvent[] = [];
     for (const t of data.tasks as Task[]) {
-      if (d0 >= startOfDay(new Date(t.plannedStart)) && d0 <= startOfDay(new Date(t.plannedEnd))) {
-        events.push({ label: t.title, kind: "task", task: t });
+      const start = startOfDay(new Date(t.plannedStart));
+      const end = startOfDay(new Date(t.plannedEnd));
+      if (d0 >= start && d0 <= end) {
+        events.push({ label: t.title, kind: "task", task: t, isStart: sameDay(d0, start), isEnd: sameDay(d0, end) });
       }
     }
     for (const e of data.entries as CalendarEntry[]) {
-      if (d0 >= startOfDay(new Date(e.start)) && d0 <= startOfDay(new Date(e.end))) {
-        events.push({ label: e.title, kind: "entry" });
+      const start = startOfDay(new Date(e.start));
+      const end = startOfDay(new Date(e.end));
+      if (d0 >= start && d0 <= end) {
+        events.push({ label: e.title, kind: "entry", isStart: sameDay(d0, start), isEnd: sameDay(d0, end) });
       }
     }
     return events;
@@ -132,7 +138,18 @@ export function CalendarPage() {
                       setPopoverTask({ task: ev.task, pos: { x: e.clientX, y: e.clientY } });
                     }
                   }}
-                  style={{ cursor: ev.kind === "task" ? "pointer" : "default" }}
+                  style={{ 
+                    cursor: ev.kind === "task" ? "pointer" : "default",
+                    marginLeft: ev.isStart ? undefined : '-9px',
+                    marginRight: ev.isEnd ? undefined : '-9px',
+                    paddingLeft: ev.isStart ? undefined : '9px',
+                    paddingRight: ev.isEnd ? undefined : '9px',
+                    borderTopLeftRadius: ev.isStart ? undefined : 0,
+                    borderBottomLeftRadius: ev.isStart ? undefined : 0,
+                    borderTopRightRadius: ev.isEnd ? undefined : 0,
+                    borderBottomRightRadius: ev.isEnd ? undefined : 0,
+                    marginBottom: '1px'
+                  }}
                 >
                   {ev.label}
                 </span>
@@ -184,6 +201,7 @@ export function CalendarPage() {
             setPopoverTask(null);
             setEditingTask(popoverTask.task);
           }}
+          onStatusChange={reload}
         />
       )}
 

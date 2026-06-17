@@ -152,6 +152,7 @@ export function TasklistPage() {
             setPopoverTask(null);
             setEditing(popoverTask.task);
           }}
+          onStatusChange={reload}
         />
       )}
     </div>

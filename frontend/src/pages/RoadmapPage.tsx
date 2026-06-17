@@ -131,6 +131,7 @@ export function RoadmapPage() {
             setPopoverTask(null);
             setEditing(popoverTask.task);
           }}
+          onStatusChange={reload}
         />
       )}
 
